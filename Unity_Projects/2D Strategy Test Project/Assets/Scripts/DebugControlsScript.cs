@@ -77,7 +77,8 @@ public class DebugControlsScript : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R) && _selectorScript.selectedObject != null
             && _selectorScript.selectedObject.GetComponent<LocatableObject>().isUnit)
         {
-            _selectorScript.selectedObject.GetComponent<UnitGraphicsController>().RenderUnitBarBackground();
+            _selectorScript.selectedObject.GetComponent<UnitGraphicsController>()
+                .RenderUnitBarBackground();
         }
         // save game
         if (Input.GetKeyDown(KeyCode.S))
