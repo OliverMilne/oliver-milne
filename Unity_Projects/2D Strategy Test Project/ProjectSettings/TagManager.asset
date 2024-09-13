@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - UIForeground
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Scenery Layer
+    uniqueID: 898473617
+    locked: 0
+  - name: Unit Graphics Layer
+    uniqueID: 858911269
+    locked: 0
+  - name: Unit Player Colours Layer
+    uniqueID: 3133697453
+    locked: 0
+  - name: Fog of War Layer
+    uniqueID: 3105015639
+    locked: 0
+  - name: UI Overlays Layer
+    uniqueID: 3799208417
+    locked: 0
+  - name: Unit UI Layer
+    uniqueID: 3596943535
+    locked: 0
+  - name: UI Layer
+    uniqueID: 2824534923
+    locked: 0
