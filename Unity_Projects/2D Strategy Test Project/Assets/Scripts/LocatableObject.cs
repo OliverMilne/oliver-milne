@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,8 +9,16 @@ public class LocatableObject : MonoBehaviour
     public static int nextLocatableID;
     public static Dictionary<int, LocatableObject> locatableObjectsById = 
         new Dictionary<int, LocatableObject>(); // make this immutable down the line?
+    /// <summary>
+    /// Fires whenever a locatable object is destroyed, for victory condition checks
+    /// </summary>
+    public static event Action LocatableObjectDestroyed;
 
     public int locatableID { get; private set; }
+    /// <summary>
+    /// Shows whether PreDestructionProtocols has been called
+    /// </summary>
+    private bool _preparedForDeath = false; 
 
     // stuff drawn from LocatableData
     public int assignedTAEID 
@@ -86,6 +95,11 @@ public class LocatableObject : MonoBehaviour
     {
         return TileFinders.Instance.GetTileArrayEntryByID(assignedTAEID);
     }
+    private void OnDestroy()
+    {
+        if (!_preparedForDeath) PreDestructionProtocols();
+        try { LocatableObjectDestroyed(); } catch { }
+    }
     /// <summary>
     /// Call this before destroying the GameObject!!! It calls all the other PreDestructionProtocols methods
     /// for that object's various scripts.
@@ -119,6 +133,9 @@ public class LocatableObject : MonoBehaviour
 
         // delete its LocatableData
         CurrentGameState.Instance.gameStateInfo.locatablesInfoDict.Remove(locatableID);
+
+        // mark all this complete
+        _preparedForDeath = true;
     }
     public static void WipeAllLocatableObjectsAndReset()
     {

@@ -11,7 +11,8 @@ public class PlayerProperties : MonoBehaviour
     /// <summary>
     /// Holds PlayerProperties objects during play. Not saved.
     /// </summary>
-    public static Dictionary<int, PlayerProperties> playersById = new Dictionary<int, PlayerProperties>();
+    public static Dictionary<int, PlayerProperties> playersById 
+        = new Dictionary<int, PlayerProperties>();
 
     public int playerID { get; private set; }
     public int actions

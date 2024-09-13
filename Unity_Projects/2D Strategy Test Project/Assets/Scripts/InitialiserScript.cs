@@ -46,6 +46,7 @@ public class InitialiserScript : MonoBehaviour
         MouseBehaviourScript.Instance.MouseBehaviourScript_Initialise();
         UIControlScript.Instance.UIControlScript_Initialise();
         PlayerAIMasterScript.Instance.PlayerAIMasterScript_Initialise();
+        VictoryConditions.Instance.VictoryConditions_Initialise();
 
         try { OnLoadGame(); } catch { }
     }
@@ -68,6 +69,7 @@ public class InitialiserScript : MonoBehaviour
         UIControlScript.Instance.UIControlScript_Initialise();
         PlayerAIMasterScript.Instance.PlayerAIMasterScript_Initialise();
         InitialDebugScript.Instance.InitialDebugScript_Initialise();
+        VictoryConditions.Instance.VictoryConditions_Initialise();
 
         // Once everything's set up, start the first turn
         TurnManagerScript.Instance.StartFirstTurn();
