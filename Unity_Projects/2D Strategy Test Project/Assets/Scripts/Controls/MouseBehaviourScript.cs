@@ -5,14 +5,14 @@ using UnityEngine.Tilemaps;
 
 public class MouseBehaviourScript : MonoBehaviour
 {
+    private static MouseBehaviourScript instance;
     /// <summary>
     /// This controls mouse behaviour. It's attached to ScriptBucket.
     /// </summary>
-    private static MouseBehaviourScript instance;
     public static MouseBehaviourScript Instance { get { return instance; } }
     private void Awake()
     {
-        if (name == "ScriptBucket") instance = this;
+        if (name == "ScriptBucket" && instance == null) instance = this;
     }
 
     public Tilemap tilemapInUse;
@@ -30,6 +30,9 @@ public class MouseBehaviourScript : MonoBehaviour
 
     void Update()
     {
+        // don't do any map stuff if a popup is open
+        if (UIControlScript.Instance.popupIsOpen) return;
+
         // Getting hold of the hovered tile
         Vector3Int tileLoc = GetHoveredTileLoc();
 

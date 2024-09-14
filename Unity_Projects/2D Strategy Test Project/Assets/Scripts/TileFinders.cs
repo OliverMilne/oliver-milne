@@ -81,18 +81,14 @@ public class TileFinders : MonoBehaviour
     }
     public TileArrayEntry GetTileArrayEntryByID(int id)
     {
-        /*foreach (TileArrayEntry tae in MapArrayScript.Instance.MapTileArray)
-        {
-            if (tae.taeID == id) return tae;
-        }
-        return null;*/
         try { return MapArrayScript.Instance.MapTileArrayDict[id]; }
         catch { return null; }
     }
     public Dictionary<int, int> GetTileDistanceToTiles(TileArrayEntry tae, List<int> taeIDs)
     {
         string uniqueCheckKey = "GetTileDistanceToTiles";
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
+            t.utilityCheckBoolDict[uniqueCheckKey] = false;
 
         Dictionary<int, int> outputDictionary = new Dictionary<int, int>();
         List<List<TileArrayEntry>> ranksList = new List<List<TileArrayEntry>>();
@@ -124,6 +120,11 @@ public class TileFinders : MonoBehaviour
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
 
         return outputDictionary;
+    }
+    public HexDir GetTileHexDirToTile(TileArrayEntry origin, TileArrayEntry destination)
+    {
+        return HexOrientation.HexDirPointAToPointB(
+            origin.GetTileWorldLocation(), destination.GetTileWorldLocation());
     }
     public List<TileArrayEntry> GetTilesWithinDistance(TileArrayEntry originTAE, int distance)
     {

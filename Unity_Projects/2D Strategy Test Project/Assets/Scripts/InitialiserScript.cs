@@ -22,7 +22,7 @@ public class InitialiserScript : MonoBehaviour
         SelectorScript.Instance.ClearSelection();
         LocatableObject.WipeAllLocatableObjectsAndReset();
         Debug.Log("LocatableObjectsByID count = " + LocatableObject.locatableObjectsById.Count);
-        CurrentGameState.Instance.LoadGame();
+        CurrentGameState.Instance.LoadGameStateInfo();
 
 
         // Initialise scripts from GameStateInfo
@@ -58,7 +58,7 @@ public class InitialiserScript : MonoBehaviour
         // Wipe all preexisting stuff
         SelectorScript.Instance.ClearSelection();
         LocatableObject.WipeAllLocatableObjectsAndReset();
-        CurrentGameState.Instance.NewGame();
+        CurrentGameState.Instance.NewGameStateInfo();
 
         // Initialise scripts in dependency-safe order
         SpawnerScript.Instance.SpawnerScript_Initialise();

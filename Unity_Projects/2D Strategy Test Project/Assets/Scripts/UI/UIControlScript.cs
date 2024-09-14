@@ -1,8 +1,13 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using UnityEngine;
 using UnityEngine.UI;
-
+/// <summary>
+/// There should only be one of this, and it should be attached to the Canvas.
+/// </summary>
 public class UIControlScript : MonoBehaviour
 {
     // pseudo-singleton apparatus
@@ -10,20 +15,30 @@ public class UIControlScript : MonoBehaviour
     public static UIControlScript Instance { get { return instance; } }
     private void Awake()
     {
-        if (instance == null) instance = this;
+        // Debug.Log("UIControlScript is awake");
+        if (instance == null && gameObject.name == "Canvas") instance = this;
+        openPopupNames.CollectionChanged += MinimalPopupChangeHasOccurred;
     }
 
     // stuff it needs to control
+    public GameObject InGameMenu;
+    public ObservableCollection<string> openPopupNames = new ObservableCollection<string>();
     private Text _playerDetailsText;
+    public bool popupIsOpen { get { return openPopupNames.Count != 0; } }
     private SelectionInfoDisplayScript _selectionInfoDisplayScript;
 
     public void UIControlScript_Initialise()
     {
-        _playerDetailsText = GameObject.Find("Player details placeholder UI Text").GetComponent<Text>();
+        _playerDetailsText 
+            = GameObject.Find("Player details placeholder UI Text").GetComponent<Text>();
         SelectedObjectDisplay();
         ShowPlayerDetails();
     }
 
+    private void MinimalPopupChangeHasOccurred(object sender, NotifyCollectionChangedEventArgs e) 
+    { 
+        // Debug.Log("Popup Change Has Occurred");
+    }
     public void SelectedObjectDisplay()
     {
         if (_selectionInfoDisplayScript == null)

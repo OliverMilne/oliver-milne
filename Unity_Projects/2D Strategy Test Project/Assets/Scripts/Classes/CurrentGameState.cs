@@ -18,21 +18,21 @@ public sealed class CurrentGameState
     // here is the GameStateInfo that actually holds all the data
     public GameStateInfo gameStateInfo = new GameStateInfo();
 
-    public void NewGame()
+    public void NewGameStateInfo()
     {
         gameStateInfo = new GameStateInfo();
     }
     // we serialise and deserialise it to load and save
     // later will add proper save path functionality
-    public void LoadGame()
+    public void LoadGameStateInfo()
     {
-        NewGame();
+        NewGameStateInfo();
         gameStateInfo = JsonConvert.DeserializeObject<GameStateInfo>(
-            File.ReadAllText( @"D:\Users\User\Frontier Wars\Save Files\MonoSaveForTesting.json"));
+            File.ReadAllText( @"D:\Users\User\The Fat Of The Land\Save Files\MonoSaveForTesting.json"));
     }
     public void SaveGame()
     {
-        File.WriteAllText(@"D:\Users\User\Frontier Wars\Save Files\MonoSaveForTesting.json",
+        File.WriteAllText(@"D:\Users\User\The Fat Of The Land\Save Files\MonoSaveForTesting.json",
             JsonConvert.SerializeObject(gameStateInfo));
     }
 }

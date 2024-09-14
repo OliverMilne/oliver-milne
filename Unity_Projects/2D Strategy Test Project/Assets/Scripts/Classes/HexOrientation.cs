@@ -59,6 +59,18 @@ public class HexOrientation
             default: throw new System.Exception("Passed invalid value to HexOrientation.Clockwise2!");
         }
     }
+    public static HexDir HexDirPointAToPointB(Vector3 pointA, Vector3 pointB) 
+    { 
+        Vector3 directionVector = pointA - pointB;
+        float angle = Vector3.SignedAngle(Vector3.up, directionVector, Vector3.back);
+        if (0 < angle && angle <= 60) return HexDir.SW;
+        if (60 < angle && angle <= 120) return HexDir.W;
+        if (120 < angle && angle <= 180) return HexDir.NW;
+        if (-180 < angle && angle <= -120) return HexDir.NE;
+        if (-120 < angle && angle <= -60) return HexDir.E;
+        if (-60 < angle && angle <= 0) return HexDir.SE;
+        throw new System.Exception("Invalid angle: " + angle +"!");
+    }
     public static Quaternion HexDirToRotation(HexDir direction)
     {
         Quaternion rot;

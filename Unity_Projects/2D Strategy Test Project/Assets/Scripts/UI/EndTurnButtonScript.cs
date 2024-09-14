@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class EndTurnButtonScript : MonoBehaviour
 {
+    // doing it this ugly way because the timings don't work out to use the Instances
     private InitialiserScript _initialiserScript;
     private TurnManagerScript _turnManagerScript;
     private void Awake()
