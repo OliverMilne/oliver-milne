@@ -103,8 +103,6 @@ public class UnitBehaviour : MonoBehaviour
                 GetComponent<LocatableObject>(), t, _unitInfo.moveDistance.value))
             {
                 PlayerProperties.playersById[_unitInfo.ownerID].actions--;
-                if (_unitInfo.currentActions <= 0) _unitInfo.currentReadiness -= 0.2f;
-                _unitInfo.currentActions--;
             }
         }
         else Debug.Log("No actions remaining!");

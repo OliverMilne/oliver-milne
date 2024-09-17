@@ -31,9 +31,25 @@ public class UnitVisionScript : MonoBehaviour
     }
     private List<TileArrayEntry>[] getVisibleTiles(LocatableObject locatable, int visionRange = 5)
     {
+        return getVisibleTiles(locatable.GetLocatableLocationTAE(), visionRange);
+    }
+    private List<TileArrayEntry>[] getVisibleTiles(
+        TileArrayEntry vantagePoint, int visionRange = 5)
+    {
+        return getVisibleTiles(vantagePoint, visionRange, false, -2);
+    }
+    public List<TileArrayEntry>[] getVisibleTiles(
+        TileArrayEntry vantagePoint, int visionRange, int playerID)
+    {
+        return getVisibleTiles(vantagePoint, visionRange, true, playerID);
+    }
+    private List<TileArrayEntry>[] getVisibleTiles(
+        TileArrayEntry vantagePoint, int visionRange, 
+        bool forAIExplorationDecisions, int playerID)
+    {
         Dictionary<TileArrayEntry, int> tilesInVisionRange = new Dictionary<TileArrayEntry, int>();
         List<TileArrayEntry> nextTiles = new List<TileArrayEntry>();
-        tilesInVisionRange.Add(locatable.GetLocatableLocationTAE(), 0);
+        tilesInVisionRange.Add(vantagePoint, 0);
 
         // Get tiles in range with distances
         for (int i = 0; i < visionRange; i++)
@@ -60,8 +76,10 @@ public class UnitVisionScript : MonoBehaviour
         {
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
-                locatable.GetLocatableLocationTAE());
-            if (tae.hasCliffsByDirection[directionTaeToLocatable])
+                vantagePoint);
+            if (tae.hasCliffsByDirection[directionTaeToLocatable] 
+                && !(forAIExplorationDecisions 
+                    && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
                 tae.utilityCheckBoolDict["isObscured_gVT"] = true;
         }
 
@@ -106,12 +124,16 @@ public class UnitVisionScript : MonoBehaviour
         {
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
-                locatable.GetLocatableLocationTAE());
+                vantagePoint);
             try
             {
-                TileArrayEntry neighbourTae = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
+                TileArrayEntry neighbourTae 
+                    = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                     tae.AdjacentTileLocsByDirection[directionTaeToLocatable]);
-                if (neighbourTae.hasCliffsByDirection[HexOrientation.Opposite(directionTaeToLocatable)])
+                if (neighbourTae.hasCliffsByDirection[
+                    HexOrientation.Opposite(directionTaeToLocatable)]
+                    && !(forAIExplorationDecisions
+                    && neighbourTae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
                     tae.utilityCheckBoolDict["isObscured_gVT"] = true;
             }
             catch { }
@@ -124,8 +146,10 @@ public class UnitVisionScript : MonoBehaviour
         {
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
-                locatable.GetLocatableLocationTAE());
-            if (tae.hasCliffsByDirection[directionTaeToLocatable])
+                vantagePoint);
+            if (tae.hasCliffsByDirection[directionTaeToLocatable]
+                && !(forAIExplorationDecisions
+                    && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
             {
                 tae.utilityCheckBoolDict["isObscured_gVT"] = true;
                 tae.utilityCheckBoolDict["showExplored_gVT"] = true;
@@ -154,9 +178,9 @@ public class UnitVisionScript : MonoBehaviour
             // turn all Visible tiles' visibility to Hidden
             foreach (TileArrayEntry tae in mapArrayScript.MapTileArray)
             {
-                if (tae.visibilityByPlayerID[player.playerID] == TileVisibility.Visible)
+                if (tae.GetVisibilityByPlayerID(player.playerID) == TileVisibility.Visible)
                 {
-                    tae.visibilityByPlayerID[player.playerID] = TileVisibility.Explored;
+                    tae.SetVisibilityByPlayerID(player.playerID, TileVisibility.Explored);
                 }
             }
 
@@ -168,11 +192,11 @@ public class UnitVisionScript : MonoBehaviour
                 List<TileArrayEntry>[] visibleTiles = getVisibleTiles(locatable);
                 // set them to Visible
                 foreach (TileArrayEntry tae in visibleTiles[0]) 
-                    tae.visibilityByPlayerID[player.playerID] = TileVisibility.Visible;
+                    tae.SetVisibilityByPlayerID(player.playerID, TileVisibility.Visible);
                 // set not-quite-visible tiles to Explored
                 foreach (TileArrayEntry tae in visibleTiles[1])
-                    if (tae.visibilityByPlayerID[player.playerID] == TileVisibility.Hidden)
-                        tae.visibilityByPlayerID[player.playerID] = TileVisibility.Explored;
+                    if (tae.GetVisibilityByPlayerID(player.playerID) == TileVisibility.Hidden)
+                        tae.SetVisibilityByPlayerID(player.playerID, TileVisibility.Explored);
             }
         }
         // update all tiles' visibility graphics

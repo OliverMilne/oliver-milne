@@ -6,11 +6,11 @@ using UnityEngine;
 
 public class AIUnitGroupBehaviours : MonoBehaviour
 {
-    public static void AttackNearestEnemy(List<int> locatableIDs)
+    public static void AttackNearestEnemyToHand(List<int> locatableIDs)
     {
-        foreach (int objId in locatableIDs) AttackNearestEnemy(objId);
+        foreach (int objId in locatableIDs) AttackNearestEnemyToHand(objId);
     }
-    public static TileArrayEntry AttackNearestEnemy(int locatableID)
+    public static TileArrayEntry AttackNearestEnemyToHand(int locatableID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -32,7 +32,83 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         }
         else return obj.GetLocatableLocationTAE();
     }
-    public static TileArrayEntry GroupRoveAndAttack(List<int> locatableIDs)
+    public static TileArrayEntry ExploreUndirected(int locatableID)
+    {
+        // if there's nowhere new to see, look further afield
+        bool nothingNewToSee = true;
+
+        LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
+        if (!obj.isUnit) return obj.GetLocatableLocationTAE();
+        UnitInfo objUnitInfo = obj.GetComponent<UnitInfo>();
+
+        // Rank visible tiles in range by ExplorationPotential, pick one that has the highest
+        List<TileArrayEntry> reachableTiles =
+            UnitMovement.Instance.GetLocation1TurnReachableTiles(
+                obj, objUnitInfo.moveDistance.value);
+        TileArrayEntry highestScoringTile = reachableTiles.First();
+        float maxExplorationValue = AITileScoringScripts.ExplorationPotential(
+            objUnitInfo.ownerID, highestScoringTile, 5, out bool foundUnexploredTiles);
+        if (foundUnexploredTiles) nothingNewToSee = false;
+        foreach (TileArrayEntry tae in reachableTiles)
+        {
+            if (AITileScoringScripts.ExplorationPotential(objUnitInfo.ownerID, tae, 5,
+                out foundUnexploredTiles) > maxExplorationValue) 
+            { 
+                highestScoringTile = tae;
+                maxExplorationValue = AITileScoringScripts.ExplorationPotential(
+                    objUnitInfo.ownerID, tae, 5, out bool _);
+            }
+            if (foundUnexploredTiles) nothingNewToSee = false;
+        }
+
+        // if there's nothing new to see, look further afield
+        if (nothingNewToSee)
+        {
+            // find all reachable tiles
+            reachableTiles = UnitMovement.Instance.GetLocation1TurnReachableTiles(
+                obj, 1000);
+
+            // see which of those does better
+            highestScoringTile = reachableTiles.First();
+            maxExplorationValue = AITileScoringScripts.ExplorationPotential(
+            objUnitInfo.ownerID, highestScoringTile, 5, out foundUnexploredTiles);
+            if (foundUnexploredTiles) nothingNewToSee = false;
+            foreach (TileArrayEntry tae in reachableTiles)
+            {
+                if (AITileScoringScripts.ExplorationPotential(objUnitInfo.ownerID, tae, 5,
+                    out foundUnexploredTiles) > maxExplorationValue)
+                {
+                    highestScoringTile = tae;
+                    maxExplorationValue = AITileScoringScripts.ExplorationPotential(
+                        objUnitInfo.ownerID, tae, 5, out bool _);
+                }
+                if (foundUnexploredTiles) nothingNewToSee = false;
+            }
+        }
+
+        if (nothingNewToSee) 
+        {
+            Debug.Log("No unexplored tiles accessible!");
+        }
+        // Move obj there
+        if (highestScoringTile != null)
+        {
+            UnitMovement.Instance.MoveUnitDefault(
+                obj, highestScoringTile, objUnitInfo.moveDistance.value);
+            return highestScoringTile;
+        }
+        else throw new System.Exception("ExploreUndirected target selection error!");
+    }
+    public static TileArrayEntry GroupExploreUndirected(List<int> locatableIDs)
+    {
+        int selectIndex = Random.Range(0, locatableIDs.Count);
+        int leaderID = locatableIDs[selectIndex];
+        TileArrayEntry leaderDestination = ExploreUndirected(leaderID);
+        foreach (int objId in locatableIDs.Where(x => x != leaderID))
+            MillNear(objId, leaderDestination.TileLoc);
+        return leaderDestination;
+    }
+    public static TileArrayEntry GroupMillAndAttack(List<int> locatableIDs)
     {
         int selectIndex = Random.Range(0, locatableIDs.Count);
         int leaderID = locatableIDs[selectIndex];
@@ -53,7 +129,7 @@ public class AIUnitGroupBehaviours : MonoBehaviour
 
         // Pick a random tile in range
         List<TileArrayEntry> reachableTiles =
-            UnitMovement.Instance.GetLocatable1TurnReachableTiles(
+            UnitMovement.Instance.GetLocation1TurnReachableTiles(
                 obj, objUnitInfo.moveDistance.value, false);
         int selectIndex = Random.Range(0, reachableTiles.Count);
         TileArrayEntry destination = reachableTiles[selectIndex];
@@ -74,7 +150,7 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         Debug.Log("Unit " + objUnitInfo.unitInfoID + " is milling and attacking");
 
         if (AIUnitStatus.HasVisibleEnemyInMovementRange(objUnitInfo))
-            return AttackNearestEnemy(locatableID);
+            return AttackNearestEnemyToHand(locatableID);
         else return MillAboutRandomly(locatableID);
     }
     public static TileArrayEntry MillNear(int locatableID, Vector3Int targetLoc)
@@ -104,7 +180,7 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         Debug.Log("Unit " + objUnitInfo.unitInfoID + " is hanging near " + targetLoc);
 
         if (AIUnitStatus.HasVisibleEnemyInMovementRange(objUnitInfo))
-            return AttackNearestEnemy(locatableID);
+            return AttackNearestEnemyToHand(locatableID);
         else return MillNear(locatableID, targetLoc);
     }
     public static TileArrayEntry MillNearAndAttack(int locatableID, int associateID)

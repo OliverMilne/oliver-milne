@@ -10,6 +10,19 @@ public class TileArrayEntry
     public static int nextTileArrayEntryID = 0;
     public int taeID { get; }
 
+    // tile change tracker stuff
+    private static int _tileUpdateNumberBehind = 0;
+    /// <summary>
+    /// This is for use when reading changeable TAE data asynchronously without getting weird behaviour
+    /// due to race conditions. If it's changed, the TAE data has changed while your thread's been
+    /// busy, and you should toss out the work it's done with them.
+    /// </summary>
+    public static int tileUpdateNumber 
+    { 
+        get => _tileUpdateNumberBehind; 
+        private set { _tileUpdateNumberBehind = value; } 
+    }
+
     // info not saved
     public Dictionary<HexDir, int[]> adjacentTileLocsBehind { get; private set; }
     public Dictionary<HexDir, Vector3Int> AdjacentTileLocsByDirection
@@ -32,7 +45,11 @@ public class TileArrayEntry
     public string tileBaseKey
     {
         get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileBaseKey;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileBaseKey = value; }
+        set 
+        { 
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileBaseKey = value;
+            tileUpdateNumber++;
+        }
     }
     public Vector3Int TileLoc 
     {
@@ -55,8 +72,16 @@ public class TileArrayEntry
     public bool isPassable
     {
         get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].isPassable;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].isPassable = value; }
+        set 
+        { 
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].isPassable = value;
+            tileUpdateNumber++;
+        }
     }
+    /// <summary>
+    /// You can change these without changing tileUpdateNumber. 
+    /// Always use the thread ID in the name.
+    /// </summary>
     public Dictionary<string, bool> utilityCheckBoolDict
     {
         get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].utilityCheckBoolDict;
@@ -93,15 +118,14 @@ public class TileArrayEntry
         get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibleUnitID;
         set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibleUnitID = value; }
     }
-    public Dictionary<int, TileVisibility> visibilityByPlayerID
-    {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict = value; }
-    }
     public bool forceVisible 
     {
         get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].forceVisible;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].forceVisible = value; }
+        set 
+        { 
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].forceVisible = value;
+            tileUpdateNumber++;
+        }
     }
 
     // constructors
@@ -143,7 +167,7 @@ public class TileArrayEntry
         // _accessibleTileLocs = new List<Vector3Int>();
         adjacentTileLocsBehind = new Dictionary<HexDir, int[]>();
         foreach (int playerID in PlayerProperties.playersById.Keys)
-            visibilityByPlayerID.Add(playerID, TileVisibility.Hidden);
+            SetVisibilityByPlayerID(playerID, TileVisibility.Hidden);
         hasCliffsByDirection = new Dictionary<HexDir, bool>
         {
             { HexDir.W, false },
@@ -158,27 +182,6 @@ public class TileArrayEntry
     }
 
     // methods
-    /*public void ApplyCliffAccessibility()
-    {
-        foreach(var c in HasCliffsByDirection)
-        {
-            TileArrayEntry neighbour;
-            try
-            {
-                neighbour =
-                    mapArrayScript.GetTileArrayEntryAtLocationQuick(adjacentTileLocsByDirection[c.Key]);
-            }
-            catch { continue; }
-
-            if (c.Value) SetAccessibility(c.Key, false, false);
-            else
-            {
-                // check if the other tile has cliffs/is impassable. if not, allow access
-                if (!neighbour.HasCliffsByDirection[HexOrientation.Opposite(c.Key)] && neighbour.isPassable)
-                    SetAccessibility(c.Key, true, true);
-            }
-        }
-    }*/
     public void AssignTileContents(LocatableObject assignedLocatableObject)
     {
         // assign the gameObject to this TileArrayEntry
@@ -215,10 +218,6 @@ public class TileArrayEntry
         }
         UnitVisionScript.Instance.UpdateUnitVision();
     }
-    /*public void ClearNullTileContents()
-    {
-        // tileContentsIds = tileContentsIds.Where(x => x != null).ToList();
-    }*/
     public List<TileArrayEntry> GetAccessibleTAEs()
     {
         List<TileArrayEntry> outputList = new List<TileArrayEntry>();
@@ -286,6 +285,16 @@ public class TileArrayEntry
             AdjacentTileLocsByDirection.Where(x => x.Value == neighbour.TileLoc);
         return neighbourDictionaryEntryHolder.First().Key;
     }
+    public List<int> GetPlayersForWhomTileVisible()
+    {
+        List<int> result = new List<int>();
+        foreach (int playerID in
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict.Keys)
+            if (CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID]
+                .visibilityDict[playerID] == TileVisibility.Visible)
+                result.Add(playerID);
+        return result;
+    }
     public List<LocatableObject> GetTileContents()
     {
         List<LocatableObject> returnList = new List<LocatableObject>();
@@ -295,6 +304,10 @@ public class TileArrayEntry
     public Vector3 GetTileWorldLocation()
     {
         return MapArrayScript.Instance.tilemap.CellToWorld(TileLoc);
+    }
+    public TileVisibility GetVisibilityByPlayerID(int playerID)
+    {
+        return CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict[playerID];
     }
     private void InitialiseAdjacentTileLocs()
     {
@@ -329,14 +342,6 @@ public class TileArrayEntry
         t.position = MapArrayScript.Instance.tilemap.CellToWorld(TileLoc);
         // Debug.Log("Moved transform " + t.ToString() + " to tile " + tileLoc);
     }
-    /*public void OverwriteAccessibleTileLocs(List<TileArrayEntry> accessibleTileAEs)
-    {
-        _accessibleTileLocs.Clear();
-        foreach (TileArrayEntry accessibleTileAE in accessibleTileAEs)
-        {
-            _accessibleTileLocs.Add(accessibleTileAE.tileLoc);
-        }
-    }*/
     public void InstantiateListedScenery()
     {
         foreach (HexDir dir in hasCliffsByDirection.Keys)
@@ -374,30 +379,6 @@ public class TileArrayEntry
         SetTileVisibilityGraphic(PlayerProperties.humanPlayerID);
         // ShowVisibleUnitIfTileVisible();
     }
-    /*public void SetAccessibility(TileArrayEntry tae, bool canEnterFrom, bool canExitTo)
-    {
-        // handle this TAE's _accessibleTileLocs
-        if (canExitTo) 
-        {
-            if (!_accessibleTileLocs.Contains(tae.tileLoc)) _accessibleTileLocs.Add(tae.tileLoc);
-        }
-        else _accessibleTileLocs = _accessibleTileLocs.Where(x => x != tae.tileLoc).ToList();
-        // handle tae's _accessibleTileLocs
-        if (canEnterFrom)
-        {
-            if (!tae._accessibleTileLocs.Contains(tileLoc)) _accessibleTileLocs.Add(tileLoc);
-        }
-        else tae._accessibleTileLocs = tae._accessibleTileLocs.Where(x => x != tileLoc).ToList();
-    }*/
-    /*public void SetAccessibility(Vector3Int targetTileLoc, bool canEnterFrom, bool canExitTo)
-    {
-        TileArrayEntry tae = mapArrayScript.GetTileArrayEntryAtLocationQuick(targetTileLoc);
-        SetAccessibility(tae, canEnterFrom, canExitTo);
-    }*/
-    /*public void SetAccessibility(HexDir dir, bool canEnterFrom, bool canExitTo)
-    {
-        SetAccessibility(adjacentTileLocsByDirection[dir], canEnterFrom, canExitTo);
-    }*/
     public void SetTileGraphicToListedType()
     {
         MapArrayScript.Instance.tilemap.SetTile(TileLoc, MapArrayScript.Instance.tileBaseDict[tileBaseKey]);
@@ -410,17 +391,17 @@ public class TileArrayEntry
         // Debug.Log("SetTileVisibilityGraphic on tile " + taeID);
         if (forceVisible) MapArrayScript.Instance.fowTilemap.SetTile(
             TileLoc, MapArrayScript.Instance.fowVisibleTile);
-        else if (visibilityByPlayerID[playerId] == TileVisibility.Visible)
+        else if (GetVisibilityByPlayerID(playerId) == TileVisibility.Visible)
             MapArrayScript.Instance.fowTilemap.SetTile(
                 TileLoc, MapArrayScript.Instance.fowVisibleTile);
-        else if (visibilityByPlayerID[playerId] == TileVisibility.Explored)
+        else if (GetVisibilityByPlayerID(playerId) == TileVisibility.Explored)
             MapArrayScript.Instance.fowTilemap.SetTile(
                 TileLoc, MapArrayScript.Instance.fowExploredTile);
         else MapArrayScript.Instance.fowTilemap.SetTile(
             TileLoc, MapArrayScript.Instance.fowHiddenTile);
 
         
-        if (visibilityByPlayerID[playerId] != TileVisibility.Visible && !forceVisible)
+        if (GetVisibilityByPlayerID(playerId) != TileVisibility.Visible && !forceVisible)
         {
             List<UnitInfo> units = new List<UnitInfo>();
             foreach (int locatableId in tileContentsIds)
@@ -450,11 +431,26 @@ public class TileArrayEntry
             if (locatable.isUnit) 
             {
                 visibleUnitID = locatable.GetComponent<UnitInfo>().unitInfoID;
-                if (visibilityByPlayerID[PlayerProperties.humanPlayerID] == TileVisibility.Visible || forceVisible)
+                if (GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) == TileVisibility.Visible 
+                    || forceVisible)
                     locatable.GetComponent<UnitGraphicsController>().ShowSprite();
                 break;
             }
-        } 
+        }
+    }
+    public void SetVisibilityByPlayerID(int playerID, TileVisibility visibility)
+    {
+        try
+        {
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict[playerID]
+                = visibility;
+        }
+        catch
+        {
+            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID]
+                .visibilityDict.Add(playerID, visibility);
+        }
+        tileUpdateNumber++;
     }
     public void SetVisibleUnit(int unitInfoID)
     {
@@ -472,7 +468,8 @@ public class TileArrayEntry
             if (unitInfo.unitInfoID == unitInfoID) designatedUnitIsHere = true;
         }
 
-        if (visibilityByPlayerID[PlayerProperties.humanPlayerID] != TileVisibility.Visible && !forceVisible)
+        if (GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) != TileVisibility.Visible 
+            && !forceVisible)
         {
             // don't show anything, but set _visibleUnitID to the correct one;
             foreach (UnitInfo unitInfo in units)

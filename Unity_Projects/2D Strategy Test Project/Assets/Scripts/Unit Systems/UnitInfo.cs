@@ -23,7 +23,8 @@ public class UnitInfo : MonoBehaviour, IDisplayable
         get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentActions; 
         set 
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentActions = value;
+            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentActions 
+                = value;
             if (!TryGetComponent<SpawnerScript>(out SpawnerScript _)) 
                 SelectorScript.Instance.RefreshSelectionGraphics();
             OnDisplayableInfoUpdated();

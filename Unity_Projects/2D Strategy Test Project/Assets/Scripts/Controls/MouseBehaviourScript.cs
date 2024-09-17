@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -18,13 +20,30 @@ public class MouseBehaviourScript : MonoBehaviour
     public Tilemap tilemapInUse;
     private Vector3Int _hoverTileLoc;
     public Tile clickerTile;
-    private List<GameObject> _hoverGameObjects;
+    private List<GameObject> _hoverGameObjectsBehind = new List<GameObject>();
+    /// <summary>
+    /// ALWAYS WAIT FOR _hoverGameObjectsSemaphore BEFORE USING THIS! 
+    /// When set, this destroys every GameObject in _hoverGameObjectsBehind. Otherwise it behaves
+    /// just like a normal dictionary.
+    /// </summary>
+    private List<GameObject> _HoverGameObjects
+    {
+        get => _hoverGameObjectsBehind;
+        set
+        {
+            if (_hoverGameObjectsBehind != null)
+                foreach (GameObject gameObject in _hoverGameObjectsBehind)
+                {
+                    Destroy(gameObject);
+                }
+            _hoverGameObjectsBehind = value;
+        }
+    }
+    private readonly SemaphoreSlim _hoverGameObjectsSemaphore = new SemaphoreSlim(1,1);
 
     public void MouseBehaviourScript_Initialise()
     {
-        if (_hoverGameObjects != null) 
-            foreach (GameObject gameObject in _hoverGameObjects) Destroy(gameObject);
-        _hoverGameObjects = new List<GameObject>();
+        _HoverGameObjects = new List<GameObject>();
         // Debug.Log("MouseBehaviourScript initialised");
     }
 
@@ -40,7 +59,9 @@ public class MouseBehaviourScript : MonoBehaviour
         if (tileLoc != _hoverTileLoc)
         {
             _hoverTileLoc = tileLoc;
-            WipeHoverEntities();
+            _hoverGameObjectsSemaphore.Wait();
+            _HoverGameObjects = new List<GameObject>();
+            _hoverGameObjectsSemaphore.Release();
 
             TileArrayEntry myTileAE = null;
             try { myTileAE = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc); }
@@ -55,18 +76,10 @@ public class MouseBehaviourScript : MonoBehaviour
                 // hover route behaviour
                 if (SelectorScript.Instance.selectedObject != null) 
                 {
-                    LocatableObject selectedUnit = SelectorScript.Instance.selectedObject.GetComponent<LocatableObject>();
+                    LocatableObject selectedUnit 
+                        = SelectorScript.Instance.selectedObject.GetComponent<LocatableObject>();
                     if (selectedUnit.GetLocatableLocationTAE().TileLoc != tileLoc)
-                        _hoverGameObjects = UnitMovement.Instance.MoveUnitPreview(
-                            selectedUnit,
-                            myTileAE,
-                            selectedUnit.unitInfo.moveDistance.value
-                            );
-                    // movement range preview for hovered selected unit
-                    /*else _hoverGameObjects = _unitMovement.DebugAccessibleTilesPreview(
-                            selectedUnit,
-                            selectedUnit.unitInfo.moveDistance
-                            );*/
+                        HoverMovementPreview(selectedUnit, myTileAE);
                 }
             }
         }
@@ -82,14 +95,17 @@ public class MouseBehaviourScript : MonoBehaviour
                 Tile clickedTile = tilemapInUse.GetTile(tileLoc) as Tile;
                 if (clickedTile != null)
                 {
-                    TileArrayEntry tileAtTileLoc = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc);
-                    if (tileAtTileLoc.visibilityByPlayerID[PlayerProperties.humanPlayerID] == TileVisibility.Visible 
-                        || tileAtTileLoc.forceVisible)
+                    TileArrayEntry tileAtTileLoc 
+                        = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc);
+                    if (tileAtTileLoc.GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) 
+                        == TileVisibility.Visible || tileAtTileLoc.forceVisible)
                         SelectorScript.Instance.SelectTileLocContents(tileLoc);
                     else SelectorScript.Instance.ClearSelection();
                     // Debug.Log("Attempted to SelectTileLocContents");
                 }
-                WipeHoverEntities();
+                _hoverGameObjectsSemaphore.Wait();
+                _HoverGameObjects = new List<GameObject>();
+                _hoverGameObjectsSemaphore.Release();
             }
         }
 
@@ -105,7 +121,9 @@ public class MouseBehaviourScript : MonoBehaviour
                         TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc));
                 } 
                 catch { }
-                WipeHoverEntities();
+                _hoverGameObjectsSemaphore.Wait();
+                _HoverGameObjects = new List<GameObject>();
+                _hoverGameObjectsSemaphore.Release();
             }
         }
     }
@@ -119,12 +137,20 @@ public class MouseBehaviourScript : MonoBehaviour
         Vector3 worldMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         return tilemapInUse.WorldToCell(new Vector3(worldMousePosition.x, worldMousePosition.y));
     }
-    private void WipeHoverEntities()
+    private void HoverMovementPreview(LocatableObject unit, TileArrayEntry targetTAE)
     {
-        foreach (GameObject gameObject in _hoverGameObjects)
+        int startingTileUpdateNumber = TileArrayEntry.tileUpdateNumber;
+        List<GameObject> moveUnitPreview = UnitMovement.Instance.MoveUnitPreview(
+                            unit,
+                            targetTAE,
+                            unit.unitInfo.moveDistance.value
+                            );
+        _hoverGameObjectsSemaphore.Wait();
+        if (startingTileUpdateNumber == TileArrayEntry.tileUpdateNumber
+            && GetHoveredTileLoc() == targetTAE.TileLoc) 
         {
-            Destroy(gameObject);
+            _HoverGameObjects = moveUnitPreview; 
         }
-        _hoverGameObjects = new List<GameObject>();
+        _hoverGameObjectsSemaphore.Release();
     }
 }

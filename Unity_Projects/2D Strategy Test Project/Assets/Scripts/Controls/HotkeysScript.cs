@@ -35,6 +35,14 @@ public class HotkeysScript : MonoBehaviour
             if (unitGraphicsController != null) unitGraphicsController.ToggleSpriteVisibility();
             Debug.Log("DebugControlsScript: Sprite visibility toggled for selected object");
         }
+        // autoexplore
+        if (Input.GetKeyDown(KeyCode.A) && _selectorScript.selectedObject != null
+            && _selectorScript.selectedObject.GetComponent<LocatableObject>().isUnit)
+        {
+            // immediately make the selected unit autoexplore
+            AIUnitGroupBehaviours.ExploreUndirected(
+                _selectorScript.selectedObject.locatableObject.locatableID);
+        }
         // apply movement buff
         if (Input.GetKeyDown(KeyCode.B) && _selectorScript.selectedObject != null
             && _selectorScript.selectedObject.GetComponent<LocatableObject>().isUnit)
@@ -105,8 +113,7 @@ public class HotkeysScript : MonoBehaviour
                 {
                     _debugOverlays.Add(_overlayGraphicsScript.CreateTileDebugText(
                         tae, 
-                        tae.visibilityByPlayerID.Where(
-                            x => x.Value == TileVisibility.Visible).Count().ToString()));
+                        tae.GetPlayersForWhomTileVisible().Count().ToString()));
                 }
         }
         // toggle tile number overlays

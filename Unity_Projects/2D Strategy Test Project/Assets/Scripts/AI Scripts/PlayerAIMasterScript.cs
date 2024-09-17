@@ -26,8 +26,12 @@ public class PlayerAIMasterScript : MonoBehaviour
 
     private void PlayerAIDoStuff(PlayerProperties playerProperties)
     {
+        // Plan: explore as a group until an enemy is sighted, then beeline to them and attack
         if (playerProperties.ownedObjectIds.Count > 0)
-            AIUnitGroupBehaviours.GroupRoveAndAttack(playerProperties.ownedObjectIds);
+        {
+            // this is to be replaced
+            AIUnitGroupBehaviours.GroupMillAndAttack(playerProperties.ownedObjectIds);
+        }
     }
     public void PlayerTurnAiCaller()
     {

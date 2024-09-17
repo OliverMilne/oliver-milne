@@ -7,7 +7,7 @@ public class AIUnitStatus : MonoBehaviour
     public static bool HasVisibleEnemyInMovementRange(UnitInfo unitInfo)
     {
         List<TileArrayEntry> reachableTiles =
-                UnitMovement.Instance.GetLocatable1TurnReachableTiles(
+                UnitMovement.Instance.GetLocation1TurnReachableTiles(
                     unitInfo.GetComponent<LocatableObject>(), 
                     unitInfo.moveDistance.value);
 
@@ -17,10 +17,11 @@ public class AIUnitStatus : MonoBehaviour
                 return true;
         return false;
     }
-    public static bool HasVisibleEnemyInMovementRange(UnitInfo unitInfo, out List<TileArrayEntry> locations)
+    public static bool HasVisibleEnemyInMovementRange(
+        UnitInfo unitInfo, out List<TileArrayEntry> locations)
     {
         List<TileArrayEntry> reachableTiles =
-                UnitMovement.Instance.GetLocatable1TurnReachableTiles(
+                UnitMovement.Instance.GetLocation1TurnReachableTiles(
                     unitInfo.GetComponent<LocatableObject>(),
                     unitInfo.moveDistance.value);
         List<TileArrayEntry> enemyOccupiedTiles = new List<TileArrayEntry>();

@@ -22,7 +22,7 @@ public class TileFinders : MonoBehaviour
         // Pick a closest one
         foreach (TileArrayEntry targetTile in listToSearch)
         {
-            int pathDistance = UnitMovement.AStarPathCalculator(
+            int pathDistance = UnitMovement.AStarPathCalculatorThreaded(
                 originTAE, targetTile, visibilityPlayerID, accountForVisibility).Count;
             if (pathDistance < minDistance) { destination = targetTile; minDistance = pathDistance; }
         }
@@ -117,7 +117,8 @@ public class TileFinders : MonoBehaviour
             ranksList.Add(thisRank);
         }
 
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
+            t.utilityCheckBoolDict.Remove(uniqueCheckKey);
 
         return outputDictionary;
     }
@@ -128,7 +129,7 @@ public class TileFinders : MonoBehaviour
     }
     public List<TileArrayEntry> GetTilesWithinDistance(TileArrayEntry originTAE, int distance)
     {
-        string uniqueCheckKey = "GetTilesWithinDistance";
+        string uniqueCheckKey = $"GetTilesWithinDistance {originTAE.taeID} {distance}";
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
 
         List<TileArrayEntry> tilesWithinDistance = new List<TileArrayEntry>();
@@ -146,7 +147,8 @@ public class TileFinders : MonoBehaviour
             tilesWithinDistance.AddRange(tilesToAdd);
             tilesToAdd.Clear();
         }
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
+            t.utilityCheckBoolDict.Remove(uniqueCheckKey);
         return tilesWithinDistance;
     }
 }

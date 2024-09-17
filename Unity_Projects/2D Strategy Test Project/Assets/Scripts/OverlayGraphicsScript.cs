@@ -44,7 +44,7 @@ public class OverlayGraphicsScript : MonoBehaviour
         {
             // draw the selection graphics
             LocatableObject selectedLocatable = selectedObject.GetComponent<LocatableObject>();
-            List<TileArrayEntry> areaTiles = UnitMovement.Instance.GetLocatable1TurnReachableTiles(
+            List<TileArrayEntry> areaTiles = UnitMovement.Instance.GetLocation1TurnReachableTiles(
                 selectedLocatable,
                 selectedUnitInfo.moveDistance.value,
                 true);
