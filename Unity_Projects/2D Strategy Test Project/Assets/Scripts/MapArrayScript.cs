@@ -63,8 +63,8 @@ public class MapArrayScript : MonoBehaviour
     }
     public void MapArrayScript_Initialise()
     {
-        mapXSize = 20;
-        mapYSize = 20;
+        mapXSize = 100;
+        mapYSize = 100;
 
         mapXOffset = mapXSize / 2;
         mapYOffset = mapYSize / 2;
@@ -295,33 +295,34 @@ public class MapArrayScript : MonoBehaviour
     {
         // This is meant to create a landscape of mountains and valleys.
         // Pick some peaks and make 'em tall (should be less likely with water borders)
-        string uniqueCheckKey = "AssignTileHeights";
+        string assignTileHeightsKey = "AssignTileHeights";
         string isPeakKey = "isPeak";
         foreach (TileArrayEntry t in MapTileArray)
         {
-            t.utilityCheckBoolDict[uniqueCheckKey] = false;
-            t.utilityCheckBoolDict[isPeakKey] = false;
+            t.AddUtilityCheckBoolDictEntry(assignTileHeightsKey, false);
+            t.AddUtilityCheckBoolDictEntry(isPeakKey, false);
         }
 
         // make some peaks
         foreach (TileArrayEntry tae in MapTileArray)
         {
             if (UnityEngine.Random.value < 0.05 
-                && tae.isPassable && !tae.utilityCheckBoolDict[uniqueCheckKey])
+                && tae.isPassable && !tae.GetUtilityCheckBoolDictEntry( assignTileHeightsKey))
             {
                 tae.terrainHeight = UnityEngine.Random.Range(5, 10);
-                tae.utilityCheckBoolDict[isPeakKey] = true;
+                tae.SetUtilityCheckBoolDictEntry(isPeakKey, true);
                 // get tiles within 3 and turn utilityCheckBoolDict[uniqueCheckKey] to true
                 List<TileArrayEntry> nearbyTiles = TileFinders.Instance.GetTilesWithinDistance(tae, 3);
                 foreach (TileArrayEntry tileArrayEntry in nearbyTiles.Where(x => x.taeID != tae.taeID))
                 {
-                    tileArrayEntry.utilityCheckBoolDict[uniqueCheckKey] = true;
+                    tileArrayEntry.SetUtilityCheckBoolDictEntry(assignTileHeightsKey, true);
                 }
             }
         }
         // Step down to zero over a random number of steps per peak
-        foreach (TileArrayEntry tae in MapTileArray) 
-            if (tae.isPassable && !tae.utilityCheckBoolDict[isPeakKey])
+        foreach (TileArrayEntry tae in MapTileArray)
+        {
+            if (tae.isPassable && !tae.GetUtilityCheckBoolDictEntry(isPeakKey))
             {
                 // Get distance to nearest water tile
                 Dictionary<TileArrayEntry, int> waterTiles =
@@ -331,7 +332,8 @@ public class MapArrayScript : MonoBehaviour
 
                 // Get distances to, heights of nearest two peaks
                 Dictionary<TileArrayEntry, int> nearestPeaks =
-                    TileFinders.Instance.GetNearestXTilesAndDistancesWithCondition(tae, 2, x => x.utilityCheckBoolDict[isPeakKey]);
+                    TileFinders.Instance.GetNearestXTilesAndDistancesWithCondition(
+                        tae, 2, x => x.GetUtilityCheckBoolDictEntry(isPeakKey));
                 if (nearestPeaks.Count < 2) break;
                 float peak0Height = nearestPeaks.First().Key.terrainHeight;
                 float peak1Height = nearestPeaks.Last().Key.terrainHeight;
@@ -346,11 +348,12 @@ public class MapArrayScript : MonoBehaviour
 
                 tae.terrainHeight = (weightedAvgPeakHeight * coastDistanceMultiplier);
             }
+        }
 
         foreach (TileArrayEntry tae in MapTileArray)
         {
-            tae.utilityCheckBoolDict.Remove(uniqueCheckKey);
-            tae.utilityCheckBoolDict.Remove(isPeakKey);
+            tae.RemoveUtilityCheckBoolDictEntry(assignTileHeightsKey);
+            tae.RemoveUtilityCheckBoolDictEntry(isPeakKey);
         }
     }
     private void BasicMapGen()
@@ -368,121 +371,15 @@ public class MapArrayScript : MonoBehaviour
             tae.RectifyScenery(false);
         }
     }
-    /*public Dictionary<TileArrayEntry, int> GetNearestXTilesAndDistancesWithCondition(
-        TileArrayEntry originTAE, int numberRequired, Predicate<TileArrayEntry> eligibilityCondition)
+    public bool IsVector3IntATileLocOnTheMap(Vector3Int loc)
     {
-        string uniqueCheckKey = "GetNearestXTilesAndDistancesWithCondition";
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
-
-        Dictionary<TileArrayEntry, int> returnDict = new Dictionary<TileArrayEntry, int>();
-
-        // iterate out by ranks until you've got enough TAEs & distances in your dictionary to send off
-        List<List<TileArrayEntry>> ranksList = new List<List<TileArrayEntry>>();
-        ranksList.Add(new List<TileArrayEntry> { originTAE });
-        originTAE.utilityCheckBoolDict[uniqueCheckKey] = true;
-
-        int foundCount = 0;
-        int rankCounter = 0;
-        while (rankCounter < 2000)
+        try
         {
-            rankCounter++;
-            if (rankCounter == 2000)
-                Debug.Log("MapArrayScript.GetTileDistanceToTiles: RankCounter hit 2000!");
-            List<TileArrayEntry> thisRank = new List<TileArrayEntry>();
-            foreach (TileArrayEntry t in ranksList.Last())
-            {
-                foreach (TileArrayEntry adj in
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]).ToList())
-                {
-                    thisRank.Add(adj);
-                    if (eligibilityCondition(adj)) 
-                    {
-                        returnDict[adj] = rankCounter;
-                        foundCount++;
-                        if (foundCount == numberRequired) break;
-                    }
-                    adj.utilityCheckBoolDict[uniqueCheckKey] = true;
-                }
-                if (foundCount == numberRequired) break;
-            }
-            if (thisRank.Count == 0 || foundCount == numberRequired) break;
-            ranksList.Add(thisRank);
+            TileFinders.Instance.GetTileArrayEntryAtLocationQuick(loc);
+            return true;
         }
-
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
-        return returnDict;
-    }*/
-    /*public TileArrayEntry GetTileArrayEntryAtLocationQuick(Vector3Int location)
-    {
-        return MapTileArray[location.x - mapXOffset, location.y - mapYOffset];
-    }*/
-    /*public TileArrayEntry GetTileArrayEntryByID(int id)
-    {
-        foreach (TileArrayEntry tae in MapTileArray)
-        {
-            if (tae.taeID == id) return tae;
-        }
-        return null;
-    }*/
-    /*public Dictionary<int, int> GetTileDistanceToTiles(TileArrayEntry tae, List<int> taeIDs)
-    {
-        string uniqueCheckKey = "GetTileDistanceToTiles";
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
-
-        Dictionary<int, int> outputDictionary = new Dictionary<int, int>();
-        List<List<TileArrayEntry>> ranksList = new List<List<TileArrayEntry>>();
-        ranksList.Add(new List<TileArrayEntry> { tae });
-        if (taeIDs.Contains(tae.taeID)) outputDictionary[tae.taeID] = 0;
-        tae.utilityCheckBoolDict[uniqueCheckKey] = true;
-
-        int rankCounter = 0;
-        while (rankCounter < 2000)
-        {
-            rankCounter++;
-            if (rankCounter == 2000) 
-                Debug.Log("MapArrayScript.GetTileDistanceToTiles: RankCounter hit 2000!");
-            List<TileArrayEntry> thisRank = new List<TileArrayEntry>();
-            foreach (TileArrayEntry t in ranksList.Last())
-            {
-                foreach (TileArrayEntry adj in 
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]).ToList())
-                {
-                    thisRank.Add(adj);
-                    if (taeIDs.Contains(adj.taeID)) outputDictionary[adj.taeID] = rankCounter;
-                    adj.utilityCheckBoolDict[uniqueCheckKey] = true;
-                }
-            }
-            if (thisRank.Count == 0) break;
-            ranksList.Add(thisRank);
-        }
-
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
-
-        return outputDictionary;
-    }*/
-    /*public List<TileArrayEntry> GetTilesWithinDistance(TileArrayEntry originTAE, int distance)
-    {
-        string uniqueCheckKey = "GetTilesWithinDistance";
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
-
-        List<TileArrayEntry> tilesWithinDistance = new List<TileArrayEntry>();
-        List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
-        tilesWithinDistance.Add(originTAE);
-        originTAE.utilityCheckBoolDict[uniqueCheckKey] = true;
-        for (int i = 0; i < distance; i++)
-        {
-            foreach (TileArrayEntry t in tilesWithinDistance)
-            {
-                tilesToAdd.AddRange(
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]));
-                foreach (TileArrayEntry t2 in tilesToAdd) t2.utilityCheckBoolDict[uniqueCheckKey] = true;
-            }
-            tilesWithinDistance.AddRange(tilesToAdd);
-            tilesToAdd.Clear();
-        }
-        foreach (TileArrayEntry t in MapTileArray) t.utilityCheckBoolDict.Remove(uniqueCheckKey);
-        return tilesWithinDistance;
-    }*/
+        catch { return false; }
+    }
     private void LoadMapFromGameStateInfo()
     {
         tilemap.ClearAllTiles();
@@ -576,21 +473,6 @@ public class MapArrayScript : MonoBehaviour
         GameObject.Find("Main Camera").GetComponent<CameraMovementScript>().SetBounds(
             upperBound, lowerBound, leftBound, rightBound);
     }
-    /*private void SetAllTileAccessibles()
-    {
-        foreach(TileArrayEntry tae in MapTileArray)
-        {
-            // add viable candidates
-            List<TileArrayEntry> accessibleTAEs = tae.GetAdjacentTAEs();
-
-            // pick the accessible ones
-            accessibleTAEs = accessibleTAEs.Where(x => x.isPassable).ToList();
-
-            // overwrite tae.accessibleTileLocs with it
-            // tae.OverwriteAccessibleTileLocs(accessibleTAEs);
-            // tae.ApplyCliffAccessibility();
-        }
-    }*/
     public void ToggleFOW()
     {
         if (_fowOn)

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -63,11 +64,14 @@ public class UnitVisionScript : MonoBehaviour
             foreach (TileArrayEntry tae in nextTiles) tilesInVisionRange.Add(tae, i+1);
         }
 
+        string obscuredKey = $"isObscured_gVT {System.Environment.CurrentManagedThreadId}";
+        string showExploredKey = $"showExplored_gVT {System.Environment.CurrentManagedThreadId}";
+
         // Setup utilityCheckBools
         foreach (TileArrayEntry tae in tilesInVisionRange.Keys)
         { 
-            tae.utilityCheckBoolDict.Add("isObscured_gVT", false);
-            tae.utilityCheckBoolDict.Add("showExplored_gVT", false);
+            tae.AddUtilityCheckBoolDictEntry(obscuredKey, false);
+            tae.AddUtilityCheckBoolDictEntry(showExploredKey, false);
         }
         
         // Using tile utility check bools, set tiles with blockers to be invisible
@@ -80,7 +84,7 @@ public class UnitVisionScript : MonoBehaviour
             if (tae.hasCliffsByDirection[directionTaeToLocatable] 
                 && !(forAIExplorationDecisions 
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
-                tae.utilityCheckBoolDict["isObscured_gVT"] = true;
+                tae.SetUtilityCheckBoolDictEntry(obscuredKey, true);
         }
 
         // Cascade invisibility to those behind them
@@ -89,38 +93,38 @@ public class UnitVisionScript : MonoBehaviour
         {
             visibilityChanges = false;
             List<TileArrayEntry> obscuredTiles = tilesInVisionRange.Keys.Where(
-                x => x.utilityCheckBoolDict["isObscured_gVT"]).ToList();
+                x => x.GetUtilityCheckBoolDictEntry(obscuredKey)).ToList();
             foreach (TileArrayEntry tae in obscuredTiles)
             {
                 List<TileArrayEntry> visibleNeighboursToObscure = GetNeighboursBehind(
                     tilesInVisionRange, tae).Where(
-                    x => !x.utilityCheckBoolDict["isObscured_gVT"]).ToList();
+                    x => !x.GetUtilityCheckBoolDictEntry(obscuredKey)).ToList();
                 if (visibleNeighboursToObscure.Count > 0) 
                 {
                     visibilityChanges = true;
                     foreach (TileArrayEntry neigh in visibleNeighboursToObscure)
-                        neigh.utilityCheckBoolDict["isObscured_gVT"] = true;
+                        neigh.SetUtilityCheckBoolDictEntry(obscuredKey, true);
                 }
             }
         }
 
         // Cascade visibility once from visible tiles
         List<TileArrayEntry> unobscuredTiles = tilesInVisionRange.Keys.Where(
-                x => !x.utilityCheckBoolDict["isObscured_gVT"]).ToList();
+                x => !x.GetUtilityCheckBoolDictEntry(obscuredKey)).ToList();
         foreach (TileArrayEntry tae in unobscuredTiles)
         {
             List<TileArrayEntry> obscuredNeighboursToReveal = GetNeighboursBehind(
                 tilesInVisionRange, tae).Where(
-                x => x.utilityCheckBoolDict["isObscured_gVT"]).ToList();
+                x => x.GetUtilityCheckBoolDictEntry(obscuredKey)).ToList();
             if (obscuredNeighboursToReveal.Count > 0)
                 foreach (TileArrayEntry neigh in obscuredNeighboursToReveal)
-                    neigh.utilityCheckBoolDict["isObscured_gVT"] = false;
+                    neigh.SetUtilityCheckBoolDictEntry(obscuredKey, false);
         }
 
         // Hide visible tiles immediately behind nonadjacent cliffs down
         foreach (TileArrayEntry tae
             in tilesInVisionRange.Keys.Where(
-                x => tilesInVisionRange[x] > 1 && !x.utilityCheckBoolDict["isObscured_gVT"]))
+                x => tilesInVisionRange[x] > 1 && !x.GetUtilityCheckBoolDictEntry(obscuredKey)))
         {
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
@@ -134,7 +138,7 @@ public class UnitVisionScript : MonoBehaviour
                     HexOrientation.Opposite(directionTaeToLocatable)]
                     && !(forAIExplorationDecisions
                     && neighbourTae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
-                    tae.utilityCheckBoolDict["isObscured_gVT"] = true;
+                    tae.SetUtilityCheckBoolDictEntry(obscuredKey, true);
             }
             catch { }
         }
@@ -142,7 +146,7 @@ public class UnitVisionScript : MonoBehaviour
         // Switch adjacent tiles behind cliffs to explored instead of visible
         foreach (TileArrayEntry tae
             in tilesInVisionRange.Keys.Where(
-                x => tilesInVisionRange[x] == 1 && !x.utilityCheckBoolDict["isObscured_gVT"]))
+                x => tilesInVisionRange[x] == 1 && !x.GetUtilityCheckBoolDictEntry(obscuredKey)))
         {
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
@@ -151,23 +155,23 @@ public class UnitVisionScript : MonoBehaviour
                 && !(forAIExplorationDecisions
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
             {
-                tae.utilityCheckBoolDict["isObscured_gVT"] = true;
-                tae.utilityCheckBoolDict["showExplored_gVT"] = true;
+                tae.SetUtilityCheckBoolDictEntry(obscuredKey, true);
+                tae.SetUtilityCheckBoolDictEntry(showExploredKey, true);
             }
         }
 
         List<TileArrayEntry> visibleTiles
             = tilesInVisionRange.Keys.Where(
-                x => !x.utilityCheckBoolDict["isObscured_gVT"]).ToList();
+                x => !x.GetUtilityCheckBoolDictEntry(obscuredKey)).ToList();
         List<TileArrayEntry> exploredTiles
             = tilesInVisionRange.Keys.Where(
-                x => x.utilityCheckBoolDict["showExplored_gVT"]).ToList();
+                x => x.GetUtilityCheckBoolDictEntry(showExploredKey)).ToList();
 
         // Clean up the utilityCheckBools
         foreach (TileArrayEntry tae in tilesInVisionRange.Keys)
         {
-            tae.utilityCheckBoolDict.Remove("isObscured_gVT");
-            tae.utilityCheckBoolDict.Remove("showExplored_gVT");
+            tae.RemoveUtilityCheckBoolDictEntry(obscuredKey);
+            tae.RemoveUtilityCheckBoolDictEntry(showExploredKey);
         }
         return new List<TileArrayEntry>[] { visibleTiles, exploredTiles };
     }

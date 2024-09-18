@@ -22,7 +22,7 @@ public class MouseBehaviourScript : MonoBehaviour
     public Tile clickerTile;
     private List<GameObject> _hoverGameObjectsBehind = new List<GameObject>();
     /// <summary>
-    /// ALWAYS WAIT FOR _hoverGameObjectsSemaphore BEFORE USING THIS! 
+    /// Should only be access from main thread.
     /// When set, this destroys every GameObject in _hoverGameObjectsBehind. Otherwise it behaves
     /// just like a normal dictionary.
     /// </summary>
@@ -39,7 +39,15 @@ public class MouseBehaviourScript : MonoBehaviour
             _hoverGameObjectsBehind = value;
         }
     }
-    private readonly SemaphoreSlim _hoverGameObjectsSemaphore = new SemaphoreSlim(1,1);
+    /// <summary>
+    /// Stores the path for the movement preview. Wait for the associated semaphore before accessing it!
+    /// </summary>
+    private List<TileArrayEntry> _movementPreviewBuffer = new List<TileArrayEntry>();
+    private readonly SemaphoreSlim _movementPreviewBufferSemaphore = new SemaphoreSlim(1,1);
+    private volatile int _movementPreviewTileUpdateNumber = -1;
+    private volatile int _movementPreviewSelectedLocatableID = -2;
+    private volatile int _movementPreviewTargetTAEID = -1;
+    private volatile int _movementPreviewBufferUpdated = 0;
 
     public void MouseBehaviourScript_Initialise()
     {
@@ -55,13 +63,12 @@ public class MouseBehaviourScript : MonoBehaviour
         // Getting hold of the hovered tile
         Vector3Int tileLoc = GetHoveredTileLoc();
 
+        UpdateHoverGameObjectsLazily();
+
         // Hover behaviour
         if (tileLoc != _hoverTileLoc)
         {
             _hoverTileLoc = tileLoc;
-            _hoverGameObjectsSemaphore.Wait();
-            _HoverGameObjects = new List<GameObject>();
-            _hoverGameObjectsSemaphore.Release();
 
             TileArrayEntry myTileAE = null;
             try { myTileAE = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc); }
@@ -73,13 +80,17 @@ public class MouseBehaviourScript : MonoBehaviour
             }
             else
             {
-                // hover route behaviour
+                // Get hover route asynchronously
                 if (SelectorScript.Instance.selectedObject != null) 
                 {
                     LocatableObject selectedUnit 
                         = SelectorScript.Instance.selectedObject.GetComponent<LocatableObject>();
                     if (selectedUnit.GetLocatableLocationTAE().TileLoc != tileLoc)
-                        HoverMovementPreview(selectedUnit, myTileAE);
+                    { 
+                        AsyncUpdateHoverMovementPreviewBuffer(selectedUnit, myTileAE,
+                            selectedUnit.GetLocatableLocationTAE());
+                        // Debug.Log("Movement preview buffer update called");
+                    }
                 }
             }
         }
@@ -103,9 +114,7 @@ public class MouseBehaviourScript : MonoBehaviour
                     else SelectorScript.Instance.ClearSelection();
                     // Debug.Log("Attempted to SelectTileLocContents");
                 }
-                _hoverGameObjectsSemaphore.Wait();
                 _HoverGameObjects = new List<GameObject>();
-                _hoverGameObjectsSemaphore.Release();
             }
         }
 
@@ -121,36 +130,90 @@ public class MouseBehaviourScript : MonoBehaviour
                         TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc));
                 } 
                 catch { }
-                _hoverGameObjectsSemaphore.Wait();
                 _HoverGameObjects = new List<GameObject>();
-                _hoverGameObjectsSemaphore.Release();
             }
         }
     }
 
     public TileArrayEntry GetHoveredTile()
     {
-        return TileFinders.Instance.GetTileArrayEntryAtLocationQuick(GetHoveredTileLoc());
+        Vector3Int hoveredTileLoc = GetHoveredTileLoc();
+        if (hoveredTileLoc == null || !MapArrayScript.Instance.IsVector3IntATileLocOnTheMap(hoveredTileLoc)) 
+            return null;
+        return TileFinders.Instance.GetTileArrayEntryAtLocationQuick(hoveredTileLoc);
     }
     private Vector3Int GetHoveredTileLoc()
     {
         Vector3 worldMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         return tilemapInUse.WorldToCell(new Vector3(worldMousePosition.x, worldMousePosition.y));
     }
-    private void HoverMovementPreview(LocatableObject unit, TileArrayEntry targetTAE)
+    private async void AsyncUpdateHoverMovementPreviewBuffer(LocatableObject unit, TileArrayEntry targetTAE,
+        TileArrayEntry startingTAE)
     {
-        int startingTileUpdateNumber = TileArrayEntry.tileUpdateNumber;
-        List<GameObject> moveUnitPreview = UnitMovement.Instance.MoveUnitPreview(
-                            unit,
-                            targetTAE,
-                            unit.unitInfo.moveDistance.value
-                            );
-        _hoverGameObjectsSemaphore.Wait();
-        if (startingTileUpdateNumber == TileArrayEntry.tileUpdateNumber
-            && GetHoveredTileLoc() == targetTAE.TileLoc) 
+        await Task.Run(() =>
         {
-            _HoverGameObjects = moveUnitPreview; 
+            // this is a sneaky cheat to cover the fact the main thread keeps getting clogged
+            // if(!targetTAE.isPassable) return;
+
+            // assigning ints is atomic so this should be safe...?
+            _movementPreviewTileUpdateNumber = TileArrayEntry.tileUpdateNumber;
+            _movementPreviewSelectedLocatableID = unit.locatableID;
+            _movementPreviewTargetTAEID = targetTAE.taeID;
+
+
+            List<TileArrayEntry> previewPath = UnitMovement.AStarPathCalculatorMultithreaded(
+                                startingTAE,
+                                targetTAE,
+                                unit.unitInfo.ownerID
+                                );
+            _movementPreviewBufferSemaphore.Wait();
+            if (previewPath != null)
+            {
+                _movementPreviewBuffer = previewPath;
+                _movementPreviewBufferUpdated = 1;
+                // Debug.Log("Movement preview buffer filled");
+            }
+            else _movementPreviewBuffer = new List<TileArrayEntry>() { startingTAE };
+            _movementPreviewBufferSemaphore.Release();
+        });
+    }
+    private void UpdateHoverGameObjectsLazily()
+    {
+        if (1 == Interlocked.Exchange(ref _movementPreviewBufferUpdated, 0))
+        {
+            if (SelectorScript.Instance.selectedObject == null) return;
+            if (GetHoveredTile() == null) return;
+            if (_movementPreviewTileUpdateNumber == TileArrayEntry.tileUpdateNumber
+                && _movementPreviewSelectedLocatableID 
+                == SelectorScript.Instance.selectedObject.locatableObject.locatableID
+                && _movementPreviewTargetTAEID == GetHoveredTile().taeID)
+            {
+                _movementPreviewBufferSemaphore.Wait();
+                _HoverGameObjects = new List<GameObject>();
+                bool ignoreThis = true;
+                int distanceCounter = 0;
+                if (_movementPreviewBuffer.Count == 0)
+                {
+                    _movementPreviewBufferSemaphore.Release();
+                    return;
+                }
+                foreach (TileArrayEntry entry in _movementPreviewBuffer)
+                {
+                    if (ignoreThis) { ignoreThis = false; }
+                    else if (true)//distanceCounter <= maxMoveDistance)
+                    {
+                        GameObject marker = Instantiate(
+                            UnitMovement.Instance.movementPreviewMarkerPrefab,
+                            MapArrayScript.Instance.tilemap.CellToWorld(entry.TileLoc),
+                            Quaternion.identity);
+                        _HoverGameObjects.Add(marker);
+                    }
+                    // add future turn move preview functionality here
+                    distanceCounter++;
+                }
+                _movementPreviewBufferSemaphore.Release();
+                // Debug.Log("Generated move preview objects");
+            }
         }
-        _hoverGameObjectsSemaphore.Release();
     }
 }

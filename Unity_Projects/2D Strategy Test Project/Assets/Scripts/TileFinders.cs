@@ -22,7 +22,7 @@ public class TileFinders : MonoBehaviour
         // Pick a closest one
         foreach (TileArrayEntry targetTile in listToSearch)
         {
-            int pathDistance = UnitMovement.AStarPathCalculatorThreaded(
+            int pathDistance = UnitMovement.AStarPathCalculatorMultithreaded(
                 originTAE, targetTile, visibilityPlayerID, accountForVisibility).Count;
             if (pathDistance < minDistance) { destination = targetTile; minDistance = pathDistance; }
         }
@@ -32,15 +32,17 @@ public class TileFinders : MonoBehaviour
         TileArrayEntry originTAE, int numberRequired, Predicate<TileArrayEntry> eligibilityCondition)
     {
         string uniqueCheckKey = "GetNearestXTilesAndDistancesWithCondition";
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
-            t.utilityCheckBoolDict[uniqueCheckKey] = false;
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.AddUtilityCheckBoolDictEntry(uniqueCheckKey, false);
+        }
 
         Dictionary<TileArrayEntry, int> returnDict = new Dictionary<TileArrayEntry, int>();
 
         // iterate out by ranks until you've got enough TAEs & distances in your dictionary to send off
         List<List<TileArrayEntry>> ranksList = new List<List<TileArrayEntry>>();
         ranksList.Add(new List<TileArrayEntry> { originTAE });
-        originTAE.utilityCheckBoolDict[uniqueCheckKey] = true;
+        originTAE.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
 
         int foundCount = 0;
         int rankCounter = 0;
@@ -53,7 +55,7 @@ public class TileFinders : MonoBehaviour
             foreach (TileArrayEntry t in ranksList.Last())
             {
                 foreach (TileArrayEntry adj in
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]).ToList())
+                    t.GetAdjacentTAEs().Where(x => !x.GetUtilityCheckBoolDictEntry(uniqueCheckKey)).ToList())
                 {
                     thisRank.Add(adj);
                     if (eligibilityCondition(adj))
@@ -62,7 +64,7 @@ public class TileFinders : MonoBehaviour
                         foundCount++;
                         if (foundCount == numberRequired) break;
                     }
-                    adj.utilityCheckBoolDict[uniqueCheckKey] = true;
+                    adj.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
                 }
                 if (foundCount == numberRequired) break;
             }
@@ -70,10 +72,17 @@ public class TileFinders : MonoBehaviour
             ranksList.Add(thisRank);
         }
 
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
-            t.utilityCheckBoolDict.Remove(uniqueCheckKey);
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.RemoveUtilityCheckBoolDictEntry(uniqueCheckKey);
+        }
         return returnDict;
     }
+    /// <summary>
+    /// This purposefully throws an error if you try to pass it a location that's not on the map.
+    /// </summary>
+    /// <param name="location"></param>
+    /// <returns></returns>
     public TileArrayEntry GetTileArrayEntryAtLocationQuick(Vector3Int location)
     {
         return MapArrayScript.Instance.MapTileArray[
@@ -87,14 +96,16 @@ public class TileFinders : MonoBehaviour
     public Dictionary<int, int> GetTileDistanceToTiles(TileArrayEntry tae, List<int> taeIDs)
     {
         string uniqueCheckKey = "GetTileDistanceToTiles";
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
-            t.utilityCheckBoolDict[uniqueCheckKey] = false;
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.AddUtilityCheckBoolDictEntry(uniqueCheckKey, false);
+        }
 
         Dictionary<int, int> outputDictionary = new Dictionary<int, int>();
         List<List<TileArrayEntry>> ranksList = new List<List<TileArrayEntry>>();
         ranksList.Add(new List<TileArrayEntry> { tae });
         if (taeIDs.Contains(tae.taeID)) outputDictionary[tae.taeID] = 0;
-        tae.utilityCheckBoolDict[uniqueCheckKey] = true;
+        tae.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
 
         int rankCounter = 0;
         while (rankCounter < 2000)
@@ -106,19 +117,21 @@ public class TileFinders : MonoBehaviour
             foreach (TileArrayEntry t in ranksList.Last())
             {
                 foreach (TileArrayEntry adj in
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]).ToList())
+                    t.GetAdjacentTAEs().Where(x => !x.GetUtilityCheckBoolDictEntry(uniqueCheckKey)).ToList())
                 {
                     thisRank.Add(adj);
                     if (taeIDs.Contains(adj.taeID)) outputDictionary[adj.taeID] = rankCounter;
-                    adj.utilityCheckBoolDict[uniqueCheckKey] = true;
+                    adj.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
                 }
             }
             if (thisRank.Count == 0) break;
             ranksList.Add(thisRank);
         }
 
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
-            t.utilityCheckBoolDict.Remove(uniqueCheckKey);
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.RemoveUtilityCheckBoolDictEntry(uniqueCheckKey);
+        }
 
         return outputDictionary;
     }
@@ -130,25 +143,31 @@ public class TileFinders : MonoBehaviour
     public List<TileArrayEntry> GetTilesWithinDistance(TileArrayEntry originTAE, int distance)
     {
         string uniqueCheckKey = $"GetTilesWithinDistance {originTAE.taeID} {distance}";
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) t.utilityCheckBoolDict[uniqueCheckKey] = false;
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.AddUtilityCheckBoolDictEntry(uniqueCheckKey, false);
+        }
 
         List<TileArrayEntry> tilesWithinDistance = new List<TileArrayEntry>();
         List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
         tilesWithinDistance.Add(originTAE);
-        originTAE.utilityCheckBoolDict[uniqueCheckKey] = true;
+        originTAE.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
         for (int i = 0; i < distance; i++)
         {
             foreach (TileArrayEntry t in tilesWithinDistance)
             {
                 tilesToAdd.AddRange(
-                    t.GetAdjacentTAEs().Where(x => !x.utilityCheckBoolDict[uniqueCheckKey]));
-                foreach (TileArrayEntry t2 in tilesToAdd) t2.utilityCheckBoolDict[uniqueCheckKey] = true;
+                    t.GetAdjacentTAEs().Where(x => !x.GetUtilityCheckBoolDictEntry(uniqueCheckKey)));
+                foreach (TileArrayEntry t2 in tilesToAdd) 
+                    t2.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
             }
             tilesWithinDistance.AddRange(tilesToAdd);
             tilesToAdd.Clear();
         }
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray) 
-            t.utilityCheckBoolDict.Remove(uniqueCheckKey);
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            t.RemoveUtilityCheckBoolDictEntry(uniqueCheckKey);
+        }
         return tilesWithinDistance;
     }
 }
