@@ -1,1 +1,1 @@
-This repository is my coding portfolio!
+Welcome to my coding portfolio!
