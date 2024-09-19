@@ -161,7 +161,7 @@ public class MouseBehaviourScript : MonoBehaviour
             _movementPreviewTargetTAEID = targetTAE.taeID;
 
 
-            List<TileArrayEntry> previewPath = UnitMovement.AStarPathCalculatorMultithreaded(
+            List<TileArrayEntry> previewPath = UnitMovement.AStarPathCalculator(
                                 startingTAE,
                                 targetTAE,
                                 unit.unitInfo.ownerID

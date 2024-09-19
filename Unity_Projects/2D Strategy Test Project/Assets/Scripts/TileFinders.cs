@@ -22,7 +22,7 @@ public class TileFinders : MonoBehaviour
         // Pick a closest one
         foreach (TileArrayEntry targetTile in listToSearch)
         {
-            int pathDistance = UnitMovement.AStarPathCalculatorMultithreaded(
+            int pathDistance = UnitMovement.AStarPathCalculator(
                 originTAE, targetTile, visibilityPlayerID, accountForVisibility).Count;
             if (pathDistance < minDistance) { destination = targetTile; minDistance = pathDistance; }
         }

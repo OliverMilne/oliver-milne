@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -125,7 +126,7 @@ public class UnitMovement : MonoBehaviour
             PlayerSetupScript.Instance.playerList.Find(x => x.playerID == unitInfo.ownerID);
 
         List<TileArrayEntry> movementPath = 
-            AStarPathCalculatorMultithreaded(unit.GetLocatableLocationTAE(), target, playerProperties.playerID, 
+            AStarPathCalculator(unit.GetLocatableLocationTAE(), target, playerProperties.playerID, 
             true);
         // if (movementPath == null) { Debug.Log("No path returned!"); return; }
         // Debug.Log("movementPath returned");
@@ -160,7 +161,7 @@ public class UnitMovement : MonoBehaviour
             return previewMarkers;
 
         // Get the movement path
-        List<TileArrayEntry> movementPath = AStarPathCalculatorMultithreaded(
+        List<TileArrayEntry> movementPath = AStarPathCalculator(
             unit.GetLocatableLocationTAE(), target, PlayerProperties.humanPlayerID, 
             true, true, maxDrawDistance);
         
@@ -220,8 +221,15 @@ public class UnitMovement : MonoBehaviour
             yield return new WaitForSeconds(0.1f);
         }
     }
-    public static List<TileArrayEntry> AStarPathCalculatorMultithreaded(
+    public static List<TileArrayEntry> AStarPathCalculator(
         TileArrayEntry start, TileArrayEntry target, int visibilityPlayerID,
+        bool accountForVisibility = true, bool distanceLimited = false, int limitDistance = 30)
+    {
+        return AStarPathCalculator(start, target, visibilityPlayerID, new CancellationToken(),
+            accountForVisibility, distanceLimited, limitDistance);
+    }
+    public static List<TileArrayEntry> AStarPathCalculator(
+        TileArrayEntry start, TileArrayEntry target, int visibilityPlayerID, CancellationToken cancelToken,
         bool accountForVisibility = true, bool distanceLimited = false, int limitDistance = 30)
     {
         string openSetMemberKey = $"AStarPathCalculator_openSetMemberKey {start.taeID} {target.taeID} " +
@@ -234,31 +242,39 @@ public class UnitMovement : MonoBehaviour
             t.AddUtilityCheckBoolDictEntry(tilesToTryMemberKey, false);
         }
 
+        Func<CancellationToken, bool> DetectCancellationAndCleanUp = new Func<CancellationToken, bool>(
+            cToke => {
+                if (cToke.IsCancellationRequested)
+                {
+                    foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+                    {
+                        t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
+                        t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
+                    }
+                    return true;
+                }
+                else return false;
+            });
+
         ICollection tilesToTry;
         if (!distanceLimited) tilesToTry = MapArrayScript.Instance.MapTileArray;
         else tilesToTry = TileFinders.Instance.GetTilesWithinDistance(start, limitDistance);
 
-        // Values: 0 = available, 1 = taken
-        Dictionary<int, SemaphoreSlim> tileAvailabilitySemaphores 
-            = new Dictionary<int, SemaphoreSlim>();
-        int taeArrayIndex = 0;
         foreach (TileArrayEntry t in tilesToTry)
         { 
             t.SetUtilityCheckBoolDictEntry(tilesToTryMemberKey, true);
-            tileAvailabilitySemaphores.Add(t.taeID, new SemaphoreSlim(1, 1));
-            taeArrayIndex++;
         }
 
         // this is the set of tiles to check next, whether moving from them
         // to their neighbours might reduce the neighbours' estdStepsViaHere
         List<TileArrayEntry> openSet = new List<TileArrayEntry>() { start };
-        SemaphoreSlim openSetSemaphore = new SemaphoreSlim(1, 1);
         start.SetUtilityCheckBoolDictEntry(openSetMemberKey, true);
 
         Dictionary<int, TileArrayEntry> cameFrom = new Dictionary<int, TileArrayEntry>();
         Dictionary<int, int> leastStepsFromStart = new Dictionary<int, int>();
         Dictionary<int, int> estdStepsViaHere = new Dictionary<int, int>();
 
+        if (DetectCancellationAndCleanUp(cancelToken)) return null;
         // Debug.Log("Beginning leastStepsFromStart dictionary assembly");
         foreach (TileArrayEntry tae in tilesToTry)
         {
@@ -267,6 +283,7 @@ public class UnitMovement : MonoBehaviour
         leastStepsFromStart[start.taeID] = 0;
         // Debug.Log("leastStepsFromStart[start] = " + leastStepsFromStart[start]);
 
+        if (DetectCancellationAndCleanUp(cancelToken)) return null;
         // Debug.Log("Beginning estdStepsViaHere dictionary assembly");
         foreach (TileArrayEntry tae in tilesToTry)
         {
@@ -275,7 +292,6 @@ public class UnitMovement : MonoBehaviour
         }
         // Debug.Log("Estd distance to target: " + DistanceEstimate(start, target));
 
-        List<TileArrayEntry> currentList = new List<TileArrayEntry> { start };
         // Debug.Log("openSet.Count = " + openSet.Count);
 
         // loop breaker
@@ -283,13 +299,14 @@ public class UnitMovement : MonoBehaviour
 
         while (openSet.Count > 0)
         {
+            if (DetectCancellationAndCleanUp(cancelToken)) return null;
             // Debug.Log("Beginning A* iteration " + iterCount);
             iterCount++;
             if (iterCount > 2000) { Debug.Log("A* while loop broken"); break; }
             /// string estdStepsList = "";
             /// foreach (var x in estdStepsViaHere.Keys) estdStepsList += x + ", ";
 
-            currentList = new List<TileArrayEntry> { openSet[0] };
+            TileArrayEntry current = openSet[0];
             if (openSet[0] == null) 
                 throw new System.Exception($"openSet[0] was null! openSet.Count == {openSet.Count()}");
             int currentLowestEstdSteps = estdStepsViaHere[openSet[0].taeID];
@@ -312,13 +329,8 @@ public class UnitMovement : MonoBehaviour
                 {
                     if (estdStepsViaHere[tae.taeID] < currentLowestEstdSteps)
                     {
-                        currentList.Clear();
-                        currentList.Add(tae);
+                        current = tae;
                         currentLowestEstdSteps = estdStepsViaHere[tae.taeID];
-                    }
-                    else if (estdStepsViaHere[tae.taeID] == currentLowestEstdSteps)
-                    {
-                        currentList.Add(tae);
                     }
                 }
                 catch(System.Exception e) {
@@ -326,86 +338,66 @@ public class UnitMovement : MonoBehaviour
                     $"Couln't find estdStepsViaHere[taeID {tae.taeID}]" 
                     + $", relevant check bool: {tae.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)}", e); }
             }
-            foreach (var current in currentList)
+            if (current.taeID == target.taeID)
             {
-                if (current.taeID == target.taeID)
+                foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
                 {
-                    foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
-                    {
-                        t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
-                        t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
-                    }
-                    return ReconstructPath(cameFrom, target); 
+                    t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
+                    t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
                 }
-
-                /* Debug.Log("Iteration count " + iterCount + ", current tileLoc = " + current.tileLoc + 
-                    "; openSet.Count after culling current = " + openSet.Count);*/
-                openSet.Remove(current);
-                current.SetUtilityCheckBoolDictEntry( openSetMemberKey, false);
+                return ReconstructPath(cameFrom, target); 
             }
 
-            // This is where the internal multithreading starts
-            Task[] neighbourCheckTasks = new Task[currentList.Count];
-            for (int i = 0; i < currentList.Count; i++)
+            /* Debug.Log("Iteration count " + iterCount + ", current tileLoc = " + current.tileLoc + 
+                "; openSet.Count after culling current = " + openSet.Count);*/
+            openSet.Remove(current);
+            current.SetUtilityCheckBoolDictEntry( openSetMemberKey, false);
+
+            // to avoid race conditions if current is also another currentList member's neighbour
+            int cachedLeastStepsCurrent = leastStepsFromStart[current.taeID];
+                
+            // get different lists of neighbours depending on whether canMislead is true
+            List<TileArrayEntry> validNeighbours = current.GetAccessibleTAEs().Where(
+            x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)).ToList();
+            if (accountForVisibility) validNeighbours.AddRange(
+                current.GetAdjacentTAEs().Where(
+                    x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)
+                    && !validNeighbours.Contains(x)
+                    // this one'll cause race conditions if the whole method is multi-threaded
+                    // best answer I guess is to make sure nothing is done with the output
+                    // if tile visibility changes, using TileArrayEntry.tileUpdateNumber checks
+                    && x.GetVisibilityByPlayerID(visibilityPlayerID) == TileVisibility.Hidden
+                    && !x.forceVisible
+                    && !(current.hasCliffsByDirection[
+                        current.AdjacentTileLocsByDirection.Where(
+                            y => y.Value == x.TileLoc).ToList().First().Key]
+                        && current.GetVisibilityByPlayerID(visibilityPlayerID) 
+                        != TileVisibility.Hidden)
+                    ).ToList());
+
+            foreach (TileArrayEntry neighbour in validNeighbours)
             {
-                TileArrayEntry current = currentList[i];
-                // to avoid race conditions if current is also another currentList member's neighbour
-                int cachedLeastStepsCurrent = leastStepsFromStart[current.taeID];
-                neighbourCheckTasks[i] = Task.Run(() =>
-                {
-                    // get different lists of neighbours depending on whether canMislead is true
-                    List<TileArrayEntry> validNeighbours = current.GetAccessibleTAEs().Where(
-                    x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)).ToList();
-                    if (accountForVisibility) validNeighbours.AddRange(
-                        current.GetAdjacentTAEs().Where(
-                            x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)
-                            && !validNeighbours.Contains(x)
-                            // this one'll cause race conditions if the whole method is multi-threaded
-                            // best answer I guess is to make sure nothing is done with the output
-                            // if tile visibility changes, using TileArrayEntry.tileUpdateNumber checks
-                            && x.GetVisibilityByPlayerID(visibilityPlayerID) == TileVisibility.Hidden
-                            && !x.forceVisible
-                            && !(current.hasCliffsByDirection[
-                                current.AdjacentTileLocsByDirection.Where(
-                                    y => y.Value == x.TileLoc).ToList().First().Key]
-                                && current.GetVisibilityByPlayerID(visibilityPlayerID) 
-                                != TileVisibility.Hidden)
-                            ).ToList());
-
-                    foreach (TileArrayEntry neighbour in validNeighbours)
-                    {
-                        // when there are tile weights, substitute that here
-                        int tentativeGScore = cachedLeastStepsCurrent + 1;
-
-                        // here's where we wait for neighbour to become available
-                        tileAvailabilitySemaphores[neighbour.taeID].Wait();
+                // when there are tile weights, substitute that here
+                int tentativeGScore = cachedLeastStepsCurrent + 1;
                         
-                        // if you've just found a faster way to get to neighbour than previously,
-                        // update everything to reflect that
-                        if (tentativeGScore < leastStepsFromStart[neighbour.taeID])
-                        {
-                            // because going via current is the fastest known way to get to neighbour
-                            cameFrom[neighbour.taeID] = current;
-                            leastStepsFromStart[neighbour.taeID] = tentativeGScore;
-                            estdStepsViaHere[neighbour.taeID]
-                                = tentativeGScore + DistanceEstimate(neighbour, target);
-                            // you just found a faster way to get to neighbour,
-                            // so you have to look at onward connections from there
-                            if (!neighbour.GetUtilityCheckBoolDictEntry(openSetMemberKey))
-                            {
-                                openSetSemaphore.Wait();
-                                openSet.Add(neighbour);
-                                openSetSemaphore.Release();
-                                neighbour.SetUtilityCheckBoolDictEntry(openSetMemberKey, true);
-                            }
-                        }
-                        tileAvailabilitySemaphores[neighbour.taeID].Release();
+                // if you've just found a faster way to get to neighbour than previously,
+                // update everything to reflect that
+                if (tentativeGScore < leastStepsFromStart[neighbour.taeID])
+                {
+                    // because going via current is the fastest known way to get to neighbour
+                    cameFrom[neighbour.taeID] = current;
+                    leastStepsFromStart[neighbour.taeID] = tentativeGScore;
+                    estdStepsViaHere[neighbour.taeID]
+                        = tentativeGScore + DistanceEstimate(neighbour, target);
+                    // you just found a faster way to get to neighbour,
+                    // so you have to look at onward connections from there
+                    if (!neighbour.GetUtilityCheckBoolDictEntry(openSetMemberKey))
+                    {
+                        openSet.Add(neighbour);
+                        neighbour.SetUtilityCheckBoolDictEntry(openSetMemberKey, true);
                     }
-                });
+                }
             }
-            // don't go back to the top of the while loop until all tasks are done!
-            // Debug.Log($"neighbourCheckTasks.Count == {neighbourCheckTasks.Count()}");
-            Task.WaitAll(neighbourCheckTasks);
         }
 
         // stuff to fire if the destination can't be reached
