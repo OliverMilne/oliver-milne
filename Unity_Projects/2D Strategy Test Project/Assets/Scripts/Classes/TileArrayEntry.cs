@@ -79,60 +79,6 @@ public class TileArrayEntry
             tileUpdateNumber++;
         }
     }
-    // utilityCheckBoolDict apparatus
-    /// <summary>
-    /// You can change these without changing tileUpdateNumber. 
-    /// Always use the thread ID in the name.
-    /// </summary>
-    private Dictionary<string, bool> utilityCheckBoolDict
-    {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].utilityCheckBoolDict;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].utilityCheckBoolDict 
-                = value; }
-    }
-    /// <summary>
-    /// Always use System.Environment.CurrentManagedThreadId in the string key!
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    public void AddUtilityCheckBoolDictEntry(string key, bool value)
-    {
-        utilityCheckBoolDictSemaphore.Wait();
-        utilityCheckBoolDict.Add(key, value);
-        utilityCheckBoolDictSemaphore.Release();
-    }
-    public bool GetUtilityCheckBoolDictEntry(string key)
-    {
-        utilityCheckBoolDictSemaphore.Wait();
-        bool answer = utilityCheckBoolDict[key];
-        utilityCheckBoolDictSemaphore.Release();
-        return answer;
-    }
-    public void RemoveUtilityCheckBoolDictEntry(string key)
-    {
-        utilityCheckBoolDictSemaphore.Wait();
-        utilityCheckBoolDict.Remove(key);
-        utilityCheckBoolDictSemaphore.Release();
-    }
-    /// <summary>
-    /// Can ONLY set existing values here, adding a new value this way will throw an error
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <exception cref="System.Exception"></exception>
-    public void SetUtilityCheckBoolDictEntry(string key, bool value)
-    {
-        utilityCheckBoolDictSemaphore.Wait();
-        try { bool _ = utilityCheckBoolDict[key]; }
-        catch (System.Exception e)
-        {
-            throw new System.Exception($"Trying to set a key that does not exist! taeID {taeID}, key {key}; "
-                + e.Message);
-        }
-        utilityCheckBoolDict[key] = value;
-        utilityCheckBoolDictSemaphore.Release();
-    }
-    private readonly SemaphoreSlim utilityCheckBoolDictSemaphore = new SemaphoreSlim(1,1);
 
     // associational info
     public List<LocatableObject> TileContents
@@ -207,7 +153,6 @@ public class TileArrayEntry
         isPassable = passability;
         tileContentsIds = new List<int>();
         terrainHeight = 0;
-        utilityCheckBoolDict = new Dictionary<string, bool>();
 
         // _accessibleTileLocs = new List<Vector3Int>();
         adjacentTileLocsBehind = new Dictionary<HexDir, int[]>();
@@ -557,5 +502,4 @@ public class TileData
     public bool forceVisible = false;
     public List<int> tileContentsIds;
     public Dictionary<HexDir, bool> HasCliffsByDirection;
-    public Dictionary<string, bool> utilityCheckBoolDict = new Dictionary<string, bool>();
 }

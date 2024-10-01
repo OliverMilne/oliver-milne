@@ -39,6 +39,7 @@ public class SelectorScript : MonoBehaviour
 
     public void ClearSelection()
     {
+        // Debug.Log("Clearing selection");
         selectedObject = null;
     }
     public void RefreshSelectionGraphics()

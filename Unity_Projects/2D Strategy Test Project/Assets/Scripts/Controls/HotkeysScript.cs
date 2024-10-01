@@ -72,10 +72,11 @@ public class HotkeysScript : MonoBehaviour
         }
         // load game
         if (Input.GetKeyDown(KeyCode.L))
-    {
-        InitialiserScript.Instance.InitialiseLoadGame();
-        Debug.Log("Loaded game");
-    }
+        {
+            Debug.Log("Attempting load game");
+            InitialiserScript.Instance.InitialiseLoadGame();
+            Debug.Log("Loaded game");
+        }
         // new game
         if (Input.GetKeyDown(KeyCode.N)) 
         {

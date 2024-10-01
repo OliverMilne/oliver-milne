@@ -3,56 +3,52 @@
   "WorkspaceRootPath": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\controls\\mousebehaviourscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\controls\\mousebehaviourscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|d:\\users\\user\\unity_projects\\2d strategy test project\\assets\\scripts\\classes\\tilearrayentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\classes\\tilearrayentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|d:\\users\\user\\unity_projects\\2d strategy test project\\assets\\scripts\\unit systems\\unitvisionscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitvisionscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\gamestate\\currentgamestate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\gamestate\\currentgamestate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\asyncthreadsmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\asyncthreadsmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\unit systems\\unitmovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitmovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|d:\\users\\user\\unity_projects\\2d strategy test project\\assets\\scripts\\tilefinders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\tilefinders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\maparrayscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\maparrayscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|d:\\users\\user\\unity_projects\\2d strategy test project\\assets\\scripts\\unit systems\\unitmovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitmovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\controls\\mousebehaviourscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\controls\\mousebehaviourscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\tilefinders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\tilefinders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\initialiserscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\initialiserscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\classes\\tilearrayentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\classes\\tilearrayentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\controls\\hotkeysscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\controls\\hotkeysscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\unit systems\\unitvisionscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitvisionscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\ai scripts\\aitilescoringscripts.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ai scripts\\aitilescoringscripts.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\ai scripts\\aiunitgroupbehaviours.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ai scripts\\aiunitgroupbehaviours.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\unit systems\\unitbehaviour.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitbehaviour.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\locatableobject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\locatableobject.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\unit systems\\unitinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\unit systems\\unitinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\ai scripts\\playeraimasterscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ai scripts\\playeraimasterscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\ai scripts\\aiunitstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ai scripts\\aiunitstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\assets\\scripts\\controls\\hotkeysscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0E7E817F-4557-9C20-16B5-364AF3138416}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\controls\\hotkeysscript.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,73 +58,84 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 11,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "MouseBehaviourScript.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAAAzwEUAAAAJAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "UnitVisionScript.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
+              "ViewState": "AgIAACkAAAAAAAAAAAAAAEQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-15T13:38:57.782Z",
-              "IsPinned": true,
+              "WhenOpened": "2024-09-22T13:21:01.704Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "TileFinders.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\TileFinders.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\TileFinders.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\TileFinders.cs",
+              "RelativeToolTip": "Assets\\Scripts\\TileFinders.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFsAAABcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-09-22T13:04:06.132Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "UnitMovement.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
-              "ViewState": "AgIAAL0AAAAAAAAAAAAxwBUBAABKAAAAAAAAAA==",
+              "Title": "CurrentGameState.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Gamestate\\CurrentGameState.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Gamestate\\CurrentGameState.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Gamestate\\CurrentGameState.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Gamestate\\CurrentGameState.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAwCEAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T12:51:23.409Z",
-              "IsPinned": true,
+              "WhenOpened": "2024-09-22T11:25:27.265Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "TileArrayEntry.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Classes\\TileArrayEntry.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Classes\\TileArrayEntry.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Classes\\TileArrayEntry.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Classes\\TileArrayEntry.cs",
-              "ViewState": "AgIAAEMAAAAAAAAAAAA1wFEAAAAlAAAAAAAAAA==",
+              "Title": "UnitMovement.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitMovement.cs",
+              "ViewState": "AgIAAHcBAAAAAAAAAAAgwIMBAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T10:11:58.214Z",
-              "IsPinned": true
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MapArrayScript.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\MapArrayScript.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\MapArrayScript.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\MapArrayScript.cs",
-              "RelativeToolTip": "Assets\\Scripts\\MapArrayScript.cs",
-              "ViewState": "AgIAADoAAAAAAAAAAAAgwEIAAAAWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T17:00:47.188Z",
+              "WhenOpened": "2024-09-22T11:05:25.226Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "UnitBehaviour.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitBehaviour.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitBehaviour.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitBehaviour.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitBehaviour.cs",
-              "ViewState": "AgIAAFYAAAAAAAAAAAApwGgAAABKAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "AsyncThreadsManager.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AsyncThreadsManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\AsyncThreadsManager.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AsyncThreadsManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\AsyncThreadsManager.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACYAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T12:53:26.112Z"
+              "WhenOpened": "2024-09-22T11:01:42.388Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "MouseBehaviourScript.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Controls\\MouseBehaviourScript.cs",
+              "ViewState": "AgIAAJIAAAAAAAAAAAAgwMQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-09-22T10:57:47.21Z"
             },
             {
               "$type": "Document",
@@ -138,93 +145,70 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitInfo.cs",
               "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitInfo.cs",
               "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitInfo.cs",
-              "ViewState": "AgIAABgAAAAAAAAAAAAkwBoAAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T12:52:35.69Z"
+              "WhenOpened": "2024-09-22T10:25:52.597Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
+              "Title": "MapArrayScript.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\MapArrayScript.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\MapArrayScript.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\MapArrayScript.cs",
+              "RelativeToolTip": "Assets\\Scripts\\MapArrayScript.cs",
+              "ViewState": "AgIAAFYAAAAAAAAAAAA7wKsBAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-09-22T09:56:10.885Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "LocatableObject.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\LocatableObject.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\LocatableObject.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\LocatableObject.cs",
+              "RelativeToolTip": "Assets\\Scripts\\LocatableObject.cs",
+              "ViewState": "AgIAAEMAAAAAAAAAAAAAAIsAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-09-22T09:42:03.812Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
               "Title": "HotkeysScript.cs",
               "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\HotkeysScript.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Controls\\HotkeysScript.cs",
               "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Controls\\HotkeysScript.cs",
               "RelativeToolTip": "Assets\\Scripts\\Controls\\HotkeysScript.cs",
-              "ViewState": "AgIAACcAAAAAAAAAAAAgwEAAAAAuAAAAAAAAAA==",
+              "ViewState": "AgIAABYAAAAAAAAAAAAwwE0AAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T12:47:52.247Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "AITileScoringScripts.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AITileScoringScripts.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\AI Scripts\\AITileScoringScripts.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AITileScoringScripts.cs",
-              "RelativeToolTip": "Assets\\Scripts\\AI Scripts\\AITileScoringScripts.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAUwBgAAAAzAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T10:53:33.141Z"
+              "WhenOpened": "2024-09-22T09:41:36.236Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 8,
-              "Title": "AIUnitGroupBehaviours.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AIUnitGroupBehaviours.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\AI Scripts\\AIUnitGroupBehaviours.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AIUnitGroupBehaviours.cs",
-              "RelativeToolTip": "Assets\\Scripts\\AI Scripts\\AIUnitGroupBehaviours.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAAAAMAAAAjAAAAAAAAAA==",
+              "Title": "InitialiserScript.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\InitialiserScript.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\InitialiserScript.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\InitialiserScript.cs",
+              "RelativeToolTip": "Assets\\Scripts\\InitialiserScript.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T10:47:25.325Z"
+              "WhenOpened": "2024-09-22T09:39:00.86Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "AIUnitStatus.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AIUnitStatus.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\AI Scripts\\AIUnitStatus.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\AIUnitStatus.cs",
-              "RelativeToolTip": "Assets\\Scripts\\AI Scripts\\AIUnitStatus.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAxAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "TileArrayEntry.cs",
+              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Classes\\TileArrayEntry.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Classes\\TileArrayEntry.cs",
+              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Classes\\TileArrayEntry.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Classes\\TileArrayEntry.cs",
+              "ViewState": "AgIAAI0AAAAAAAAAAIAwwJoAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T10:47:22.729Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "PlayerAIMasterScript.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\PlayerAIMasterScript.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\AI Scripts\\PlayerAIMasterScript.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\AI Scripts\\PlayerAIMasterScript.cs",
-              "RelativeToolTip": "Assets\\Scripts\\AI Scripts\\PlayerAIMasterScript.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAAowBcAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-14T10:46:50.364Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "UnitVisionScript.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Unit Systems\\UnitVisionScript.cs",
-              "ViewState": "AgIAAGYAAAAAAAAAAAAgwK0AAAA/AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-13T16:49:59.188Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "TileFinders.cs",
-              "DocumentMoniker": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\TileFinders.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\TileFinders.cs",
-              "ToolTip": "D:\\Users\\User\\Unity_Projects\\2D Strategy Test Project\\Assets\\Scripts\\TileFinders.cs",
-              "RelativeToolTip": "Assets\\Scripts\\TileFinders.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAIwFUAAABPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-09-13T17:31:52.417Z",
+              "WhenOpened": "2024-09-22T10:05:38.723Z",
               "EditorCaption": ""
             }
           ]

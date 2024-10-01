@@ -6,16 +6,17 @@ using System;
 using UnityEngine;
 using Newtonsoft.Json.Bson;
 
+/// <summary>
+/// This class holds all the stats and info on a unit except its location (held by LocatableObject).
+/// Should also contain sprite info.
+/// </summary>
 public class UnitInfo : MonoBehaviour, IDisplayable
 {
-    /// <summary>
-    /// This class holds all the stats and info on a unit except its location (held by LocatableObject).
-    /// Should also contain sprite info
-    /// </summary>
     public static int nextUnitInfoID;
 
     public int unitInfoID { get; private set; }
     public List<IBuffedVariable> Buffables;
+    public bool updateVisionOnDestroy = true;
 
     // data drawn from associated UnitData
     public int currentActions 
@@ -266,7 +267,8 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     private void MinimalOnDisplayableInfoUpdated() { }
     private void OnDestroy()
     {
-        UnitVisionScript.Instance.UpdateUnitVision();
+        if (updateVisionOnDestroy)
+            UnitVisionScript.Instance.UpdateUnitVision();
         // OverlayGraphicsScript.Instance.DrawSelectionGraphics(SelectorScript.Instance.selectedObject);
     }
     public event DisplayableInfoUpdated OnDisplayableInfoUpdated;

@@ -141,7 +141,8 @@ public class LocatableObject : MonoBehaviour
     {
         List<LocatableObject> allLocatables = locatableObjectsById.Values.ToList();
         foreach (var entry in allLocatables) 
-        { 
+        {
+            if (entry.isUnit) entry.unitInfo.updateVisionOnDestroy = false;
             entry.PreDestructionProtocols();
             Destroy(entry.gameObject);
         }

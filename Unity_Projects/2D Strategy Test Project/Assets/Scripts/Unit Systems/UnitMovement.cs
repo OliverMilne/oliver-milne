@@ -58,17 +58,17 @@ public class UnitMovement : MonoBehaviour
         Vector3Int startLocation, int maxMoveDistance, int visibilityPlayerID, 
         bool accountForVisibility = true)
     {
-        string uniqueCheckKey = $"GetLocation1TurnReachableTiles {System.Environment.CurrentManagedThreadId}";
+        Dictionary<int, bool> checkDict = new Dictionary<int, bool>();
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
         {
-            t.AddUtilityCheckBoolDictEntry(uniqueCheckKey, false);
+            checkDict[t.taeID] = false;
         }
 
         List<TileArrayEntry> reachableTiles = new List<TileArrayEntry>();
         TileArrayEntry startLocationTAE 
             = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(startLocation);
         reachableTiles.Add(startLocationTAE);
-        startLocationTAE.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
+        checkDict[ startLocationTAE.taeID] = true;
 
         List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
         int distanceTravelled = 0;
@@ -82,10 +82,10 @@ public class UnitMovement : MonoBehaviour
                     // see if it's in reachableTiles or tilesToAdd
                     if (nextTile != null)
                     {
-                        if (!nextTile.GetUtilityCheckBoolDictEntry(uniqueCheckKey))
+                        if (!checkDict[ nextTile.taeID])
                         { // if not, add it to tilesToAdd
                             tilesToAdd.Add(nextTile);
-                            nextTile.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
+                            checkDict[nextTile.taeID] = true;
                         }
                     }
                 }
@@ -101,10 +101,10 @@ public class UnitMovement : MonoBehaviour
                             && !(nextTile.forceVisible
                             && visibilityPlayerID == PlayerProperties.humanPlayerID))
                         {
-                            if (!nextTile.GetUtilityCheckBoolDictEntry(uniqueCheckKey))
+                            if (!checkDict[ nextTile.taeID])
                             { // if not, add it to tilesToAdd
                                 tilesToAdd.Add(nextTile);
-                                nextTile.SetUtilityCheckBoolDictEntry(uniqueCheckKey, true);
+                                checkDict[nextTile.taeID] = true;
                             }
                         }
                     }
@@ -114,8 +114,6 @@ public class UnitMovement : MonoBehaviour
             distanceTravelled++;
             if (tilesToAdd.Count == 0) break;
         }
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
-            t.RemoveUtilityCheckBoolDictEntry(uniqueCheckKey);
         return reachableTiles;
     }
     public bool MoveUnitDefault(LocatableObject unit, TileArrayEntry target, int maxMoveDistance,
@@ -133,12 +131,9 @@ public class UnitMovement : MonoBehaviour
 
         if (movementPath != null)
         {
-            // this, I guess, is the point at which the thread should rejoin the main thread?
             if (!isFreeAction) 
             { 
-                if (unit.GetComponent<UnitInfo>().currentActions <= 0) 
-                    unit.GetComponent<UnitInfo>().currentReadiness -= 0.2f;
-                unit.GetComponent<UnitInfo>().currentActions--;
+                unit.GetComponent<UnitBehaviour>().ExpendAction();
             }
             StartCoroutine(MoveAlongPath(unit, movementPath, maxMoveDistance));
             return true;
@@ -232,25 +227,18 @@ public class UnitMovement : MonoBehaviour
         TileArrayEntry start, TileArrayEntry target, int visibilityPlayerID, CancellationToken cancelToken,
         bool accountForVisibility = true, bool distanceLimited = false, int limitDistance = 30)
     {
-        string openSetMemberKey = $"AStarPathCalculator_openSetMemberKey {start.taeID} {target.taeID} " +
-            $"{System.Environment.CurrentManagedThreadId}";
-        string tilesToTryMemberKey = $"AStarPathCalculator_tilesToTryMemberKey {start.taeID} " +
-            $"{target.taeID} {System.Environment.CurrentManagedThreadId}";
+        Dictionary<int, bool> openSetDict = new Dictionary<int, bool>();
+        Dictionary<int, bool> tilesToTryDict = new Dictionary<int, bool>();
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
         {
-            t.AddUtilityCheckBoolDictEntry(openSetMemberKey, false);
-            t.AddUtilityCheckBoolDictEntry(tilesToTryMemberKey, false);
+            openSetDict[ t.taeID] = false;
+            tilesToTryDict[ t.taeID] = false;
         }
 
         Func<CancellationToken, bool> DetectCancellationAndCleanUp = new Func<CancellationToken, bool>(
             cToke => {
                 if (cToke.IsCancellationRequested)
                 {
-                    foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
-                    {
-                        t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
-                        t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
-                    }
                     return true;
                 }
                 else return false;
@@ -261,14 +249,14 @@ public class UnitMovement : MonoBehaviour
         else tilesToTry = TileFinders.Instance.GetTilesWithinDistance(start, limitDistance);
 
         foreach (TileArrayEntry t in tilesToTry)
-        { 
-            t.SetUtilityCheckBoolDictEntry(tilesToTryMemberKey, true);
+        {
+            tilesToTryDict[ t.taeID] = true;
         }
 
         // this is the set of tiles to check next, whether moving from them
         // to their neighbours might reduce the neighbours' estdStepsViaHere
         List<TileArrayEntry> openSet = new List<TileArrayEntry>() { start };
-        start.SetUtilityCheckBoolDictEntry(openSetMemberKey, true);
+        openSetDict[start.taeID] = true;
 
         Dictionary<int, TileArrayEntry> cameFrom = new Dictionary<int, TileArrayEntry>();
         Dictionary<int, int> leastStepsFromStart = new Dictionary<int, int>();
@@ -336,32 +324,27 @@ public class UnitMovement : MonoBehaviour
                 catch(System.Exception e) {
                     throw new System.Exception(
                     $"Couln't find estdStepsViaHere[taeID {tae.taeID}]" 
-                    + $", relevant check bool: {tae.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)}", e); }
+                    + $", relevant check bool: {tilesToTryDict[tae.taeID]}", e); }
             }
             if (current.taeID == target.taeID)
             {
-                foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
-                {
-                    t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
-                    t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
-                }
                 return ReconstructPath(cameFrom, target); 
             }
 
             /* Debug.Log("Iteration count " + iterCount + ", current tileLoc = " + current.tileLoc + 
                 "; openSet.Count after culling current = " + openSet.Count);*/
             openSet.Remove(current);
-            current.SetUtilityCheckBoolDictEntry( openSetMemberKey, false);
+            openSetDict[current.taeID] = false;
 
             // to avoid race conditions if current is also another currentList member's neighbour
             int cachedLeastStepsCurrent = leastStepsFromStart[current.taeID];
                 
             // get different lists of neighbours depending on whether canMislead is true
             List<TileArrayEntry> validNeighbours = current.GetAccessibleTAEs().Where(
-            x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)).ToList();
+            x => tilesToTryDict[x.taeID]).ToList();
             if (accountForVisibility) validNeighbours.AddRange(
                 current.GetAdjacentTAEs().Where(
-                    x => x.GetUtilityCheckBoolDictEntry(tilesToTryMemberKey)
+                    x => tilesToTryDict[x.taeID]
                     && !validNeighbours.Contains(x)
                     // this one'll cause race conditions if the whole method is multi-threaded
                     // best answer I guess is to make sure nothing is done with the output
@@ -391,10 +374,10 @@ public class UnitMovement : MonoBehaviour
                         = tentativeGScore + DistanceEstimate(neighbour, target);
                     // you just found a faster way to get to neighbour,
                     // so you have to look at onward connections from there
-                    if (!neighbour.GetUtilityCheckBoolDictEntry(openSetMemberKey))
+                    if (!openSetDict[ neighbour.taeID])
                     {
                         openSet.Add(neighbour);
-                        neighbour.SetUtilityCheckBoolDictEntry(openSetMemberKey, true);
+                        openSetDict[neighbour.taeID] = true;
                     }
                 }
             }
@@ -402,11 +385,7 @@ public class UnitMovement : MonoBehaviour
 
         // stuff to fire if the destination can't be reached
         // Debug.Log("Can't get to " + target.tileLoc + " from " + start.tileLoc + "!");
-        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
-        {
-            t.RemoveUtilityCheckBoolDictEntry(openSetMemberKey);
-            t.RemoveUtilityCheckBoolDictEntry(tilesToTryMemberKey);
-        }
+        
         return null;
     }
     private static int DistanceEstimate(TileArrayEntry origin, TileArrayEntry target)

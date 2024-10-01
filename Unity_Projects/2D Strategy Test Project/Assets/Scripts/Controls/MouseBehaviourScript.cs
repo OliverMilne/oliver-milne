@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+/// <summary>
+/// This controls mouse behaviour. It's attached to ScriptBucket.
+/// </summary>
 public class MouseBehaviourScript : MonoBehaviour
 {
     private static MouseBehaviourScript instance;
-    /// <summary>
-    /// This controls mouse behaviour. It's attached to ScriptBucket.
-    /// </summary>
     public static MouseBehaviourScript Instance { get { return instance; } }
     private void Awake()
     {
@@ -48,6 +48,16 @@ public class MouseBehaviourScript : MonoBehaviour
     private volatile int _movementPreviewSelectedLocatableID = -2;
     private volatile int _movementPreviewTargetTAEID = -1;
     private volatile int _movementPreviewBufferUpdated = 0;
+    private bool _preventMouseInteractionBehind = false;
+    public bool preventMouseInteraction 
+    { 
+        get
+        {
+            if (InitialiserScript.Instance.initialisationInProgress) return true;
+            else return _preventMouseInteractionBehind;
+        }
+        set { _preventMouseInteractionBehind = value; } 
+    }
 
     public void MouseBehaviourScript_Initialise()
     {
@@ -57,6 +67,9 @@ public class MouseBehaviourScript : MonoBehaviour
 
     void Update()
     {
+        // don't do anything if the game's initialising
+        if (preventMouseInteraction) return;
+
         // don't do any map stuff if a popup is open
         if (UIControlScript.Instance.popupIsOpen) return;
 
@@ -108,10 +121,17 @@ public class MouseBehaviourScript : MonoBehaviour
                 {
                     TileArrayEntry tileAtTileLoc 
                         = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc);
-                    if (tileAtTileLoc.GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) 
+                    if (tileAtTileLoc.GetVisibilityByPlayerID(PlayerProperties.humanPlayerID)
                         == TileVisibility.Visible || tileAtTileLoc.forceVisible)
+                    {
+                        // Debug.Log("Firing SelectTileContents");
                         SelectorScript.Instance.SelectTileLocContents(tileLoc);
-                    else SelectorScript.Instance.ClearSelection();
+                    }
+                    else 
+                    {
+                        // Debug.Log("Firing ClearSelection");
+                        SelectorScript.Instance.ClearSelection(); 
+                    }
                     // Debug.Log("Attempted to SelectTileLocContents");
                 }
                 _HoverGameObjects = new List<GameObject>();
@@ -152,8 +172,7 @@ public class MouseBehaviourScript : MonoBehaviour
     {
         await Task.Run(() =>
         {
-            // this is a sneaky cheat to cover the fact the main thread keeps getting clogged
-            // if(!targetTAE.isPassable) return;
+            AsyncThreadsManager.DeclareThreadRunning();
 
             // assigning ints is atomic so this should be safe...?
             _movementPreviewTileUpdateNumber = TileArrayEntry.tileUpdateNumber;
@@ -175,6 +194,8 @@ public class MouseBehaviourScript : MonoBehaviour
             }
             else _movementPreviewBuffer = new List<TileArrayEntry>() { startingTAE };
             _movementPreviewBufferSemaphore.Release();
+
+            AsyncThreadsManager.DeclareThreadStopped();
         });
     }
     private void UpdateHoverGameObjectsLazily()

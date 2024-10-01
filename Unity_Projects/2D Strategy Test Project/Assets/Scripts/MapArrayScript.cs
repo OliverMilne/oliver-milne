@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Threading;
 
 public class MapArrayScript : MonoBehaviour
 {
@@ -63,8 +64,8 @@ public class MapArrayScript : MonoBehaviour
     }
     public void MapArrayScript_Initialise()
     {
-        mapXSize = 100;
-        mapYSize = 100;
+        mapXSize = 20;
+        mapYSize = 20;
 
         mapXOffset = mapXSize / 2;
         mapYOffset = mapYSize / 2;
@@ -295,34 +296,34 @@ public class MapArrayScript : MonoBehaviour
     {
         // This is meant to create a landscape of mountains and valleys.
         // Pick some peaks and make 'em tall (should be less likely with water borders)
-        string assignTileHeightsKey = "AssignTileHeights";
-        string isPeakKey = "isPeak";
+        Dictionary<int, bool> assignedHeightsDict = new Dictionary<int, bool>();
+        Dictionary<int, bool> isPeakDict = new Dictionary<int, bool>();
         foreach (TileArrayEntry t in MapTileArray)
         {
-            t.AddUtilityCheckBoolDictEntry(assignTileHeightsKey, false);
-            t.AddUtilityCheckBoolDictEntry(isPeakKey, false);
+            assignedHeightsDict[t.taeID] = false;
+            isPeakDict[t.taeID] = false;
         }
 
         // make some peaks
         foreach (TileArrayEntry tae in MapTileArray)
         {
             if (UnityEngine.Random.value < 0.05 
-                && tae.isPassable && !tae.GetUtilityCheckBoolDictEntry( assignTileHeightsKey))
+                && tae.isPassable && !assignedHeightsDict[tae.taeID])
             {
                 tae.terrainHeight = UnityEngine.Random.Range(5, 10);
-                tae.SetUtilityCheckBoolDictEntry(isPeakKey, true);
+                isPeakDict[tae.taeID] = true;
                 // get tiles within 3 and turn utilityCheckBoolDict[uniqueCheckKey] to true
                 List<TileArrayEntry> nearbyTiles = TileFinders.Instance.GetTilesWithinDistance(tae, 3);
                 foreach (TileArrayEntry tileArrayEntry in nearbyTiles.Where(x => x.taeID != tae.taeID))
                 {
-                    tileArrayEntry.SetUtilityCheckBoolDictEntry(assignTileHeightsKey, true);
+                    assignedHeightsDict[tileArrayEntry.taeID] = true;
                 }
             }
         }
         // Step down to zero over a random number of steps per peak
         foreach (TileArrayEntry tae in MapTileArray)
         {
-            if (tae.isPassable && !tae.GetUtilityCheckBoolDictEntry(isPeakKey))
+            if (tae.isPassable && !isPeakDict[tae.taeID])
             {
                 // Get distance to nearest water tile
                 Dictionary<TileArrayEntry, int> waterTiles =
@@ -333,7 +334,7 @@ public class MapArrayScript : MonoBehaviour
                 // Get distances to, heights of nearest two peaks
                 Dictionary<TileArrayEntry, int> nearestPeaks =
                     TileFinders.Instance.GetNearestXTilesAndDistancesWithCondition(
-                        tae, 2, x => x.GetUtilityCheckBoolDictEntry(isPeakKey));
+                        tae, 2, x => isPeakDict[x.taeID]);
                 if (nearestPeaks.Count < 2) break;
                 float peak0Height = nearestPeaks.First().Key.terrainHeight;
                 float peak1Height = nearestPeaks.Last().Key.terrainHeight;
@@ -348,12 +349,6 @@ public class MapArrayScript : MonoBehaviour
 
                 tae.terrainHeight = (weightedAvgPeakHeight * coastDistanceMultiplier);
             }
-        }
-
-        foreach (TileArrayEntry tae in MapTileArray)
-        {
-            tae.RemoveUtilityCheckBoolDictEntry(assignTileHeightsKey);
-            tae.RemoveUtilityCheckBoolDictEntry(isPeakKey);
         }
     }
     private void BasicMapGen()
@@ -382,12 +377,18 @@ public class MapArrayScript : MonoBehaviour
     }
     private void LoadMapFromGameStateInfo()
     {
+        Debug.Log("Clearing all tiles");
         tilemap.ClearAllTiles();
         float upperBound = 0;
         float lowerBound = 0;
         float leftBound = 0;
         float rightBound = 0;
 
+        Debug.Log("Initialising new MapTileArray");
+        // before disposing the semaphores, need to put a stop to all calculations going on
+        // using them in parallel threads
+        while (AsyncThreadsManager.AreAsyncThreadsStillRunning()) Thread.Sleep(10);
+        Debug.Log("Waited for threads to stop successfully");
         MapTileArray = new TileArrayEntry[
             CurrentGameState.Instance.gameStateInfo.mapData.mapXSize,
             CurrentGameState.Instance.gameStateInfo.mapData.mapYSize];
@@ -395,7 +396,9 @@ public class MapArrayScript : MonoBehaviour
         int xOffset = CurrentGameState.Instance.gameStateInfo.mapData.mapXOffset;
         int yOffset = CurrentGameState.Instance.gameStateInfo.mapData.mapYOffset;
 
+        Debug.Log("Creating TAEs to match saved TileDatas");
         // create TileArrayEntries to match the TileData in the save file
+        // this is where the crash is coming from!
         foreach (var entry in CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict)
         {
             TileArrayEntry.nextTileArrayEntryID = entry.Key;
@@ -404,6 +407,7 @@ public class MapArrayScript : MonoBehaviour
                 entry.Value.tileActualLoc[1] - yOffset] = new TileArrayEntry();
         }
 
+        Debug.Log("Doing graphical stuff");
         // do tilemap and camera stuff
         foreach (TileArrayEntry tae in MapTileArray)
         {

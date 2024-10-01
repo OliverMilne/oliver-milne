@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEngine.UI.CanvasScaler;
 /// <summary>
 /// This class contains methods for units to do things like refresh their actions at the start of a turn.
 /// It's attached to the unit itself.
@@ -43,6 +44,12 @@ public class UnitBehaviour : MonoBehaviour
     private void DefaultUnitAction(TileArrayEntry t)
     {
         Move(t);
+    }
+    public void ExpendAction()
+    {
+        if (_unitInfo.currentActions <= 0)
+            _unitInfo.currentReadiness -= 0.2f;
+        _unitInfo.currentActions--;
     }
     public void MeleeAttackTile(TileArrayEntry t)
     {
