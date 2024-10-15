@@ -14,23 +14,23 @@ public class CameraMovementScript : MonoBehaviour
 
     private float _upperBound 
     {
-        get => CurrentGameState.Instance.gameStateInfo.cameraMovementData.upperBound;
-        set { CurrentGameState.Instance.gameStateInfo.cameraMovementData.upperBound = value; }
+        get => CurrentGameState.Instance.gameStateData.cameraMovementData.upperBound;
+        set { CurrentGameState.Instance.gameStateData.cameraMovementData.upperBound = value; }
     }
     private float _lowerBound 
     {
-        get => CurrentGameState.Instance.gameStateInfo.cameraMovementData.lowerBound;
-        set { CurrentGameState.Instance.gameStateInfo.cameraMovementData.lowerBound = value; }
+        get => CurrentGameState.Instance.gameStateData.cameraMovementData.lowerBound;
+        set { CurrentGameState.Instance.gameStateData.cameraMovementData.lowerBound = value; }
     }
     private float _leftBound
     {
-        get => CurrentGameState.Instance.gameStateInfo.cameraMovementData.leftBound;
-        set { CurrentGameState.Instance.gameStateInfo.cameraMovementData.leftBound = value; }
+        get => CurrentGameState.Instance.gameStateData.cameraMovementData.leftBound;
+        set { CurrentGameState.Instance.gameStateData.cameraMovementData.leftBound = value; }
     }
 private float _rightBound
     {
-        get => CurrentGameState.Instance.gameStateInfo.cameraMovementData.rightBound;
-        set { CurrentGameState.Instance.gameStateInfo.cameraMovementData.rightBound = value; }
+        get => CurrentGameState.Instance.gameStateData.cameraMovementData.rightBound;
+        set { CurrentGameState.Instance.gameStateData.cameraMovementData.rightBound = value; }
     }
 
     public void SetBounds(float upper, float lower, float left, float right)
@@ -66,11 +66,11 @@ private float _rightBound
         }
 
         // save camera position to GameStateInfo
-        CurrentGameState.Instance.gameStateInfo.cameraMovementData.cameraPosition[0] 
+        CurrentGameState.Instance.gameStateData.cameraMovementData.cameraPosition[0] 
             = GetComponent<Transform>().position.x;
-        CurrentGameState.Instance.gameStateInfo.cameraMovementData.cameraPosition[1]
+        CurrentGameState.Instance.gameStateData.cameraMovementData.cameraPosition[1]
             = GetComponent<Transform>().position.y;
-        CurrentGameState.Instance.gameStateInfo.cameraMovementData.cameraPosition[2]
+        CurrentGameState.Instance.gameStateData.cameraMovementData.cameraPosition[2]
             = GetComponent<Transform>().position.z;
     }
 }

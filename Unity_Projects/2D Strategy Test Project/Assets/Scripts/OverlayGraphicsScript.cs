@@ -28,6 +28,10 @@ public class OverlayGraphicsScript : MonoBehaviour
         _selectionGraphics = new List<GameObject>();
     }
 
+    public void DebugTemporaryOverlay(LocatableObject unit, int maxMoveDistance)
+    {
+        _selectionGraphics.AddRange(UnitMovement.Instance.DebugAccessibleTilesPreview(unit, maxMoveDistance));
+    }
     public void DrawSelectionGraphics(SelectableObject selectedObject)
     {
         // Debug.Log("SelectorScript: DrawSelectionGraphics called");

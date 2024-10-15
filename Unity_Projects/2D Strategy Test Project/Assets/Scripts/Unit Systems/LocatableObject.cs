@@ -1,12 +1,24 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 
 public class LocatableObject : MonoBehaviour
 {
-    public static int nextLocatableID;
+    private static int _nextLocatableIDBehind;
+    public static int nextLocatableID 
+    { 
+        get 
+        {
+            int returnValue = _nextLocatableIDBehind;
+            _nextLocatableIDBehind
+                = CurrentGameState.Instance.gameStateData.iDDispensers["LocatableObject"].DispenseID();
+            return returnValue;
+        } 
+        set { _nextLocatableIDBehind = value; }
+    }
     public static Dictionary<int, LocatableObject> locatableObjectsById = 
         new Dictionary<int, LocatableObject>(); // make this immutable down the line?
     /// <summary>
@@ -23,35 +35,35 @@ public class LocatableObject : MonoBehaviour
     // stuff drawn from LocatableData
     public int assignedTAEID 
     {
-        get => CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].assignedTAEID;
+        get => CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].assignedTAEID;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].assignedTAEID = value;
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].assignedTAEID = value;
         }
     }
     public bool isUnit
     {
-        get => CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isUnit;
+        get => CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isUnit;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isUnit = value;
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isUnit = value;
             if (value) unitInfo = GetComponent<UnitInfo>();
         }
     }
     public bool isScenery
     {
-        get => CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isScenery;
+        get => CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isScenery;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isScenery = value;
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isScenery = value;
         }
     }
     public bool isSelectable
     {
-        get => CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isSelectable;
+        get => CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isSelectable;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isSelectable = value;
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isSelectable = value;
         }
     }
     private UnitInfo _unitInfoBehind;
@@ -61,7 +73,7 @@ public class LocatableObject : MonoBehaviour
         set 
         { 
             _unitInfoBehind = value;
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].unitInfoId =
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].unitInfoId =
                 value.unitInfoID;
         } 
     }
@@ -70,10 +82,10 @@ public class LocatableObject : MonoBehaviour
     {
         // assign locatableID
         locatableID = nextLocatableID;
-        nextLocatableID++;
-        if (!CurrentGameState.Instance.gameStateInfo.locatablesInfoDict.ContainsKey(locatableID))
+        // nextLocatableID++;
+        if (!CurrentGameState.Instance.gameStateData.locatableDataDict.ContainsKey(locatableID))
         {
-            CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID] = new LocatableData();
+            CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID] = new LocatableData();
         }
 
         locatableObjectsById.Add(locatableID, this);
@@ -132,7 +144,7 @@ public class LocatableObject : MonoBehaviour
         locatableObjectsById.Remove(locatableID);
 
         // delete its LocatableData
-        CurrentGameState.Instance.gameStateInfo.locatablesInfoDict.Remove(locatableID);
+        CurrentGameState.Instance.gameStateData.locatableDataDict.Remove(locatableID);
 
         // mark all this complete
         _preparedForDeath = true;
@@ -152,6 +164,6 @@ public class LocatableObject : MonoBehaviour
     private void WipeThisFromPlayerOwnershipDicts()
     {
         foreach (PlayerProperties player in PlayerSetupScript.Instance.playerList)
-            player.ownedObjectIds = player.ownedObjectIds.Where(x => x != locatableID).ToList();
+            player.ownedObjectIds.Remove(locatableID);
     }
 }

@@ -45,37 +45,37 @@ public class TileArrayEntry
     // core info
     public string tileBaseKey
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileBaseKey;
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileBaseKey;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileBaseKey = value;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileBaseKey = value;
             tileUpdateNumber++;
         }
     }
     public Vector3Int TileLoc 
     {
         get => new Vector3Int(
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[0],
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[1],
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[2]);
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[0],
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[1],
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[2]);
         set
         {
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[0] = value.x;
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[1] = value.y;
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileActualLoc[2] = value.z;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[0] = value.x;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[1] = value.y;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileActualLoc[2] = value.z;
         }
     }
     public float terrainHeight
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].terrainHeight;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].terrainHeight = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].terrainHeight;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].terrainHeight = value; }
     }
     public bool isPassable
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].isPassable;
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].isPassable;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].isPassable = value;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].isPassable = value;
             tileUpdateNumber++;
         }
     }
@@ -95,26 +95,26 @@ public class TileArrayEntry
     }
     public List<int> tileContentsIds
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileContentsIds;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].tileContentsIds = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileContentsIds;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileContentsIds = value; }
     }
     public Dictionary<HexDir, bool> hasCliffsByDirection
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].HasCliffsByDirection;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].HasCliffsByDirection 
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].HasCliffsByDirection;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].HasCliffsByDirection 
                 = value; }
     }    // this'll eventually be broadened to a dictionary of tile boundary effects
     public int visibleUnitID
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibleUnitID;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibleUnitID = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibleUnitID;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibleUnitID = value; }
     }
     public bool forceVisible 
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].forceVisible;
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].forceVisible;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].forceVisible = value;
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].forceVisible = value;
             tileUpdateNumber++;
         }
     }
@@ -129,7 +129,7 @@ public class TileArrayEntry
         taeID = nextTileArrayEntryID;
         nextTileArrayEntryID++;
 
-        if (!CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict.ContainsKey(taeID))
+        if (!CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict.ContainsKey(taeID))
             throw new System.Exception("TileData with key " + taeID + " does not exist!");
 
         adjacentTileLocsBehind = new Dictionary<HexDir, int[]>();
@@ -143,10 +143,10 @@ public class TileArrayEntry
         taeID = nextTileArrayEntryID;
         nextTileArrayEntryID++;
 
-        if (CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict.ContainsKey(taeID))
+        if (CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict.ContainsKey(taeID))
             throw new System.Exception("TileData with key " + taeID + " already exists!");
             
-        CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID] = new TileData();
+        CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID] = new TileData();
 
         TileLoc = tileLocation;
         tileBaseKey = basekey;
@@ -279,8 +279,8 @@ public class TileArrayEntry
     {
         List<int> result = new List<int>();
         foreach (int playerID in
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict.Keys)
-            if (CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID]
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibilityDict.Keys)
+            if (CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID]
                 .visibilityDict[playerID] == TileVisibility.Visible)
                 result.Add(playerID);
         return result;
@@ -297,7 +297,7 @@ public class TileArrayEntry
     }
     public TileVisibility GetVisibilityByPlayerID(int playerID)
     {
-        return CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict[playerID];
+        return CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibilityDict[playerID];
     }
     private void InitialiseAdjacentTileLocs()
     {
@@ -432,12 +432,12 @@ public class TileArrayEntry
     {
         try
         {
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID].visibilityDict[playerID]
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibilityDict[playerID]
                 = visibility;
         }
         catch
         {
-            CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict[taeID]
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID]
                 .visibilityDict.Add(playerID, visibility);
         }
         tileUpdateNumber++;

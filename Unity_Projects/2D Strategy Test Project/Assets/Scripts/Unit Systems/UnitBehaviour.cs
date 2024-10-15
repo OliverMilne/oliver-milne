@@ -102,12 +102,12 @@ public class UnitBehaviour : MonoBehaviour
             unit.currentReadiness -= damageTaken/tileDefMaxHP;
         }
     }
-    private void Move(TileArrayEntry t)
+    private void Move(TileArrayEntry target, bool removePlayerAPWithThisMethod = true)
     {
         if (PlayerProperties.playersById[_unitInfo.ownerID].actions > 0)
         {
-            if (UnitMovement.Instance.MoveUnitDefault(
-                GetComponent<LocatableObject>(), t, _unitInfo.moveDistance.value))
+            if (removePlayerAPWithThisMethod & UnitMovement.Instance.MoveUnitDefault(
+                GetComponent<LocatableObject>(), target, _unitInfo.moveDistance.value))
             {
                 PlayerProperties.playersById[_unitInfo.ownerID].actions--;
             }

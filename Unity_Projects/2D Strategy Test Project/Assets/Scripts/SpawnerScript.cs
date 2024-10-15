@@ -30,8 +30,6 @@ public class SpawnerScript : MonoBehaviour
     }
     public void SpawnerScript_Initialise()
     {
-        UnitInfo.nextUnitInfoID = 0;
-
         _defaultUnit_currentActions = 1;
         _defaultUnit_currentReadiness = 1;
         _defaultUnit_hitpoints = 10;
@@ -46,7 +44,7 @@ public class SpawnerScript : MonoBehaviour
 
     public void DefaultUnitSpawn(int playerId, TileArrayEntry tae)
     {
-        CurrentGameState.Instance.gameStateInfo.unitDataDict[-1] = new UnitData();
+        CurrentGameState.Instance.gameStateData.unitDataDict[-1] = new UnitData();
         spawningUnitInfo.FillOutUnitInfo(
             _defaultUnit_currentActions,
             _defaultUnit_currentReadiness,
@@ -60,21 +58,18 @@ public class SpawnerScript : MonoBehaviour
             _defaultUnit_unitSpriteResourcesAddress,
             _defaultUnit_unitPlayerColourSpriteResourcesAddress );
 
-        Transform spawnedUnit = 
-            Instantiate(unitPrefab, tilemap.CellToWorld(tae.TileLoc), Quaternion.identity);
-        // Debug.Log("Spawned Transform " + spawnedUnit.name);
-        LocatableObject spawnedLocatableObject = spawnedUnit.GetComponent<LocatableObject>();
-        spawnedLocatableObject.isSelectable = true;
-        spawnedLocatableObject.isUnit = true;
-        // Debug.Log("Spawned LocatableObject " + spawnedLocatableObject.name);
-        tae.AssignTileContents(spawnedLocatableObject);
+        SpawnUnitFromCurrentSpawningUnitInfo(tae);
     }
     public void SpawnUnit(int playerId, TileArrayEntry tae, UnitInfo unitInfo)
     {
         spawningUnitInfo.CopyUnitInfo(unitInfo);
         spawningUnitInfo.ownerID = playerId;
 
-        Transform spawnedUnit = 
+        SpawnUnitFromCurrentSpawningUnitInfo(tae);
+    }
+    private void SpawnUnitFromCurrentSpawningUnitInfo(TileArrayEntry tae)
+    {
+        Transform spawnedUnit =
             Instantiate(unitPrefab, tilemap.CellToWorld(tae.TileLoc), Quaternion.identity);
         LocatableObject spawnedLocatableObject = spawnedUnit.GetComponent<LocatableObject>();
         spawnedLocatableObject.isSelectable = true;
@@ -84,13 +79,16 @@ public class SpawnerScript : MonoBehaviour
     public void SpawnUnitFromGameStateInfo(int locatableId)
     {
         LocatableObject.nextLocatableID = locatableId;
-        UnitInfo.nextUnitInfoID 
-            = (int)CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableId].unitInfoId;
         var newUnit = Instantiate(unitPrefab);
         newUnit.GetComponent<LocatableObject>().unitInfo = newUnit.GetComponent<UnitInfo>();
+
+        // debug stuff
         if (newUnit.GetComponent<LocatableObject>().unitInfo.unitInfoID
             != newUnit.GetComponent<UnitInfo>().unitInfoID) 
             throw new System.Exception("unitInfoID mismatch for locatableID " + locatableId);
+        if (newUnit.GetComponent<LocatableObject>().locatableID
+            != newUnit.GetComponent<UnitInfo>().unitInfoID)
+            throw new System.Exception("unitInfoID does not equal locatableID " + locatableId);
         InitialiserScript.Instance.spawnCount++;
     }
 }

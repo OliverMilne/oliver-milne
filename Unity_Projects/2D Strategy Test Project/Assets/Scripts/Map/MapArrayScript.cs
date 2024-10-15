@@ -25,42 +25,42 @@ public class MapArrayScript : MonoBehaviour
 
     public int mapXSize
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.mapXSize;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.mapXSize = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.mapXSize;
+        set { CurrentGameState.Instance.gameStateData.mapData.mapXSize = value; }
     }
     public int mapYSize
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.mapYSize;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.mapYSize = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.mapYSize;
+        set { CurrentGameState.Instance.gameStateData.mapData.mapYSize = value; }
     }
     public int mapXOffset
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.mapXOffset;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.mapXOffset = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.mapXOffset;
+        set { CurrentGameState.Instance.gameStateData.mapData.mapXOffset = value; }
     }
     public int mapYOffset
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.mapYOffset;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.mapYOffset = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.mapYOffset;
+        set { CurrentGameState.Instance.gameStateData.mapData.mapYOffset = value; }
     }
 
     private bool _fowOn
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.fowOn;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.fowOn = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.fowOn;
+        set { CurrentGameState.Instance.gameStateData.mapData.fowOn = value; }
     }
     public TileArrayEntry[,] MapTileArray;
     public Dictionary<int, TileArrayEntry> MapTileArrayDict;
     public Dictionary<int, TileData> MapTileDataDict
     {
-        get => CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict;
-        set { CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict = value; }
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict = value; }
     }
 
     private void Awake()
     {
         if (this.name == "ScriptBucket") instance = this;
-        CurrentGameState.Instance.gameStateInfo.mapData = new MapData();
+        CurrentGameState.Instance.gameStateData.mapData = new MapData();
     }
     public void MapArrayScript_Initialise()
     {
@@ -390,16 +390,16 @@ public class MapArrayScript : MonoBehaviour
         while (AsyncThreadsManager.AreAsyncThreadsStillRunning()) Thread.Sleep(10);
         Debug.Log("Waited for threads to stop successfully");
         MapTileArray = new TileArrayEntry[
-            CurrentGameState.Instance.gameStateInfo.mapData.mapXSize,
-            CurrentGameState.Instance.gameStateInfo.mapData.mapYSize];
+            CurrentGameState.Instance.gameStateData.mapData.mapXSize,
+            CurrentGameState.Instance.gameStateData.mapData.mapYSize];
 
-        int xOffset = CurrentGameState.Instance.gameStateInfo.mapData.mapXOffset;
-        int yOffset = CurrentGameState.Instance.gameStateInfo.mapData.mapYOffset;
+        int xOffset = CurrentGameState.Instance.gameStateData.mapData.mapXOffset;
+        int yOffset = CurrentGameState.Instance.gameStateData.mapData.mapYOffset;
 
         Debug.Log("Creating TAEs to match saved TileDatas");
         // create TileArrayEntries to match the TileData in the save file
         // this is where the crash is coming from!
-        foreach (var entry in CurrentGameState.Instance.gameStateInfo.mapData.MapTileDataDict)
+        foreach (var entry in CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict)
         {
             TileArrayEntry.nextTileArrayEntryID = entry.Key;
             MapTileArray[
@@ -423,8 +423,8 @@ public class MapArrayScript : MonoBehaviour
             if (tileWorldPosition.x > rightBound) rightBound = tileWorldPosition.x;
         }
         GameObject.Find("Main Camera").GetComponent<CameraMovementScript>().SetCameraPosition(
-            CurrentGameState.Instance.gameStateInfo.cameraMovementData.cameraPosition[0],
-            CurrentGameState.Instance.gameStateInfo.cameraMovementData.cameraPosition[1]);
+            CurrentGameState.Instance.gameStateData.cameraMovementData.cameraPosition[0],
+            CurrentGameState.Instance.gameStateData.cameraMovementData.cameraPosition[1]);
     }
     private void MakeImpassable(TileArrayEntry tae)
     {

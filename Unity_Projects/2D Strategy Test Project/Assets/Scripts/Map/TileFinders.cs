@@ -87,7 +87,7 @@ public class TileFinders : MonoBehaviour
     public TileArrayEntry GetTileArrayEntryByID(int id)
     {
         try { return MapArrayScript.Instance.MapTileArrayDict[id]; }
-        catch { return null; }
+        catch { /*Debug.Log($"Tile {id} not found");*/ return null; }
     }
     public Dictionary<int, int> GetTileDistanceToTiles(TileArrayEntry tae, List<int> taeIDs)
     {

@@ -17,18 +17,18 @@ public sealed class CurrentGameState
     public static CurrentGameState Instance {  get { return instance; } }
 
     // here is the GameStateInfo that actually holds all the data
-    public GameStateInfo gameStateInfo = new GameStateInfo();
+    public GameStateData gameStateData = new GameStateData();
 
     public void NewGameStateInfo()
     {
-        gameStateInfo = new GameStateInfo();
+        gameStateData = new GameStateData();
     }
     // we serialise and deserialise it to load and save
     // later will add proper save path functionality
     public void LoadGameStateInfo()
     {
         NewGameStateInfo();
-        gameStateInfo = JsonConvert.DeserializeObject<GameStateInfo>(
+        gameStateData = JsonConvert.DeserializeObject<GameStateData>(
             File.ReadAllText( @"D:\Users\User\The Fat Of The Land\Save Files\MonoSaveForTesting.json"));
     }
     public void SaveGame()
@@ -36,7 +36,7 @@ public sealed class CurrentGameState
         MouseBehaviourScript.Instance.preventMouseInteraction = true;
         while (AsyncThreadsManager.AreAsyncThreadsStillRunning()) Thread.Sleep(10);
         File.WriteAllText(@"D:\Users\User\The Fat Of The Land\Save Files\MonoSaveForTesting.json",
-            JsonConvert.SerializeObject(gameStateInfo));
+            JsonConvert.SerializeObject(gameStateData));
         MouseBehaviourScript.Instance.preventMouseInteraction = false;
     }
 }

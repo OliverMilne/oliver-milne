@@ -2,14 +2,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using static TreeEditor.TreeEditorHelper;
 
 /// <summary>
-/// This class is for unit movement functionality. It contains methods that let you move units in different ways.
+/// This class is for unit movement functionality. 
+/// It contains methods that let you move units in different ways.
 /// It's attached to ScriptBucket.
 /// </summary>
 public class UnitMovement : MonoBehaviour
@@ -44,6 +47,89 @@ public class UnitMovement : MonoBehaviour
         }
         return previewMarkers;
     }
+    public TileArrayEntry GetQuickestReachableTileWithCondition(LocatableObject unitLoco,
+        Predicate<TileArrayEntry> eligibilityCondition, bool accountForVisibility = true)
+    {
+        return GetQuickestReachableTileWithCondition(
+            TileFinders.Instance.GetTileArrayEntryByID(unitLoco.assignedTAEID).TileLoc,
+            eligibilityCondition,
+            unitLoco.unitInfo.ownerID,
+            accountForVisibility,
+            MoveType.Foot);
+    }
+    public TileArrayEntry GetQuickestReachableTileWithCondition(Vector3Int startLocation,
+        Predicate<TileArrayEntry> eligibilityCondition, 
+        int visibilityPlayerID, bool accountForVisibility = true, 
+        MoveType moveType = MoveType.Foot)
+    {
+        Dictionary<int, bool> checkDict = new Dictionary<int, bool>();
+        foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
+        {
+            checkDict[t.taeID] = false;
+        }
+
+        List<TileArrayEntry> reachableTiles = new List<TileArrayEntry>();
+        TileArrayEntry startLocationTAE
+            = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(startLocation);
+        reachableTiles.Add(startLocationTAE);
+        checkDict[startLocationTAE.taeID] = true;
+
+        List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
+        int distanceTravelled = 0;
+        int loopBreaker = 0;
+        while (loopBreaker++ < 2000)
+        {
+            tilesToAdd.Clear();
+            foreach (TileArrayEntry tile in reachableTiles)
+            {
+                foreach (TileArrayEntry nextTile in tile.GetAccessibleTAEs())
+                {
+                    // see if it's in reachableTiles or tilesToAdd (i.e. have we checked it already?)
+                    if (nextTile != null)
+                    {
+                        if (!checkDict[nextTile.taeID])
+                        { 
+                            // if not, see if it fits the condition; if not, add it to tilesToAdd
+                            if (eligibilityCondition(nextTile)) return nextTile;
+                            tilesToAdd.Add(nextTile);
+                            checkDict[nextTile.taeID] = true;
+                        }
+                    }
+                }
+                // if it's counting hidden tiles as passable, add adjacent hidden tiles
+                if (accountForVisibility)
+                {
+                    foreach (TileArrayEntry nextTile in tile.GetAdjacentTAEs())
+                    {
+                        // see if it's in reachableTiles or tilesToAdd
+                        if (nextTile != null
+                            && nextTile.GetVisibilityByPlayerID(visibilityPlayerID)
+                            == TileVisibility.Hidden
+                            && !(nextTile.forceVisible
+                            && visibilityPlayerID == PlayerProperties.humanPlayerID))
+                        {
+                            if (!checkDict[nextTile.taeID])
+                            { // if not, add it to tilesToAdd
+                                tilesToAdd.Add(nextTile);
+                                checkDict[nextTile.taeID] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            reachableTiles.AddRange(tilesToAdd);
+            distanceTravelled++;
+            if (tilesToAdd.Count == 0) break;
+        }
+        return null;
+    }
+    /// <summary>
+    /// This uses the designated unit's owner to calculate visibility.
+    /// </summary>
+    /// <param name="unitLoco"></param>
+    /// <param name="maxMoveDistance"></param>
+    /// <param name="accountForVisibility"></param>
+    /// <returns></returns>
     public List<TileArrayEntry> GetLocation1TurnReachableTiles(
         LocatableObject unitLoco, int maxMoveDistance, bool accountForVisibility = true)
     {
@@ -89,7 +175,7 @@ public class UnitMovement : MonoBehaviour
                         }
                     }
                 }
-                // if it's for display, add adjacent hidden tiles
+                // if it's counting hidden tiles as passable, add adjacent hidden tiles
                 if (accountForVisibility)
                 {
                     foreach (TileArrayEntry nextTile in tile.GetAdjacentTAEs())
@@ -117,7 +203,7 @@ public class UnitMovement : MonoBehaviour
         return reachableTiles;
     }
     public bool MoveUnitDefault(LocatableObject unit, TileArrayEntry target, int maxMoveDistance,
-        bool isFreeAction = false)
+        bool costsNoUnitAP = false)
     {
         UnitInfo unitInfo = unit.GetComponent<UnitInfo>();
         PlayerProperties playerProperties =
@@ -131,14 +217,14 @@ public class UnitMovement : MonoBehaviour
 
         if (movementPath != null)
         {
-            if (!isFreeAction) 
-            { 
+            if (!costsNoUnitAP)
+            {
                 unit.GetComponent<UnitBehaviour>().ExpendAction();
             }
             StartCoroutine(MoveAlongPath(unit, movementPath, maxMoveDistance));
             return true;
         }
-        else return false;
+        else { PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false; return false; }
     }
     public List<GameObject> MoveUnitPreview(LocatableObject unit, TileArrayEntry target, 
         int maxMoveDistance)
@@ -185,7 +271,12 @@ public class UnitMovement : MonoBehaviour
     private static IEnumerator MoveAlongPath(
         LocatableObject unit, List<TileArrayEntry> movementPath, int maxSteps)
     {
-        if (movementPath.Count < 2) { Debug.Log("Path too short!"); yield break; }
+        if (movementPath.Count < 2) 
+        { 
+            Debug.Log("Path too short!");
+            PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+            yield break; 
+        }
         int i = 1;
         while (i <= maxSteps && i < movementPath.Count)
         {
@@ -193,6 +284,7 @@ public class UnitMovement : MonoBehaviour
             if (!movementPath[i - 1].GetAccessibleTAEs().Contains(movementPath[i])) 
             {
                 Debug.Log("Path blocked!");
+                PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
                 yield break; 
             }
             // do something (probably attack) if you encounter an enemy unit
@@ -207,6 +299,7 @@ public class UnitMovement : MonoBehaviour
                         {
                             unit.GetComponent<UnitBehaviour>().MeleeAttackTile(movementPath[i]);
                             // Debug.Log("Unit " + movingUnitInfo.unitInfoID + " attacked tile at " + movementPath[i].TileLoc);
+                            PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
                             yield break;
                         }
                     }
@@ -215,6 +308,8 @@ public class UnitMovement : MonoBehaviour
             i++;
             yield return new WaitForSeconds(0.1f);
         }
+        PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+        yield break;
     }
     public static List<TileArrayEntry> AStarPathCalculator(
         TileArrayEntry start, TileArrayEntry target, int visibilityPlayerID,

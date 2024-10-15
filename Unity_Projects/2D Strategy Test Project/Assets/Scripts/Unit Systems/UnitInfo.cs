@@ -5,6 +5,7 @@ using System;
 // using UnityEditor.PackageManager;
 using UnityEngine;
 using Newtonsoft.Json.Bson;
+using System.Collections.ObjectModel;
 
 /// <summary>
 /// This class holds all the stats and info on a unit except its location (held by LocatableObject).
@@ -12,8 +13,9 @@ using Newtonsoft.Json.Bson;
 /// </summary>
 public class UnitInfo : MonoBehaviour, IDisplayable
 {
-    public static int nextUnitInfoID;
-
+    /// <summary>
+    /// Where there's an associated LocatableObject, this should be the same as the locatableID.
+    /// </summary>
     public int unitInfoID { get; private set; }
     public List<IBuffedVariable> Buffables;
     public bool updateVisionOnDestroy = true;
@@ -21,10 +23,10 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     // data drawn from associated UnitData
     public int currentActions 
     { 
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentActions; 
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentActions; 
         set 
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentActions 
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentActions 
                 = value;
             if (!TryGetComponent<SpawnerScript>(out SpawnerScript _)) 
                 SelectorScript.Instance.RefreshSelectionGraphics();
@@ -33,10 +35,10 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public float currentReadiness
     { 
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentReadiness;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentReadiness;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].currentReadiness 
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentReadiness 
                 = Mathf.Clamp(value, 0, 1);
             // make sure this is actually a unit and not the SpawnerScript!
             if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
@@ -53,16 +55,16 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     /// </summary>
     public int hitpoints
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].hitpoints;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].hitpoints;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].hitpoints 
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].hitpoints 
                 = Mathf.Clamp(value, 0, maxHP); 
             // make sure this is actually a unit and not the SpawnerScript!
             if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
             OnDisplayableInfoUpdated();
             GetComponent<UnitGraphicsController>().RenderUnitHealthBar();
-            if (CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].hitpoints <= 0)
+            if (CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].hitpoints <= 0)
             {
                 GetComponent<LocatableObject>().PreDestructionProtocols();
                 Debug.Log("Unit " + unitInfoID + " died when its hitpoints reached zero!");
@@ -72,22 +74,22 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public int maxActions
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxActions;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxActions;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxActions = value;
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxActions = value;
             OnDisplayableInfoUpdated();
         }
     }
     public int maxHP
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxHP;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxHP;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxHP = value;
-            if (CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxHP <= hitpoints)
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxHP = value;
+            if (CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxHP <= hitpoints)
             {
-                hitpoints = CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxHP;
+                hitpoints = CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxHP;
             }
             if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
             GetComponent<UnitGraphicsController>().RenderUnitHealthBar();
@@ -96,39 +98,39 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public float maxMeleeDamage
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxMeleeDamage;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxMeleeDamage;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].maxMeleeDamage = value;
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxMeleeDamage = value;
             OnDisplayableInfoUpdated();
         }
     }
     public float meleeDefence
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].meleeDefence;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].meleeDefence;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].meleeDefence
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].meleeDefence
                 = Mathf.Clamp(value, 0, 1);
             OnDisplayableInfoUpdated();
         }
     }
     public BuffedInt moveDistance
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].moveDistance;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].moveDistance;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].moveDistance = value;
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].moveDistance = value;
             OnDisplayableInfoUpdated();
         }
     }
     public int ownerID
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].ownerID;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].ownerID;
         set
         {
             SetPlayerOwnershipRegistration(value);
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].ownerID = value;
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].ownerID = value;
             // Apply player colour
             if (UnitSprite != null) ApplySprite();
             OnDisplayableInfoUpdated();
@@ -136,10 +138,10 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public string unitName
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].unitName;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].unitName;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].unitName = value;
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].unitName = value;
             OnDisplayableInfoUpdated();
         }
     }
@@ -149,10 +151,10 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public string unitSpriteResourcesAddress
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].unitSpriteResourcesAddress;
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].unitSpriteResourcesAddress;
         set 
         { 
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID].unitSpriteResourcesAddress 
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].unitSpriteResourcesAddress 
                 = value;
             OnDisplayableInfoUpdated();
         }
@@ -163,11 +165,11 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     }
     public string unitPlayerColourSpriteResourcesAddress
     {
-        get => CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID]
+        get => CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID]
             .unitPlayerColourSpriteResourcesAddress;
         set
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID]
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID]
                 .unitPlayerColourSpriteResourcesAddress = value;
             OnDisplayableInfoUpdated();
         }
@@ -187,14 +189,13 @@ public class UnitInfo : MonoBehaviour, IDisplayable
         if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) unitInfoID = -1;
         else 
         { 
-            unitInfoID = nextUnitInfoID;
-            nextUnitInfoID++;
+            unitInfoID = GetComponent<LocatableObject>().locatableID;
         }
 
         // write UnitData
-        if (!CurrentGameState.Instance.gameStateInfo.unitDataDict.ContainsKey(unitInfoID))
+        if (!CurrentGameState.Instance.gameStateData.unitDataDict.ContainsKey(unitInfoID))
         {
-            CurrentGameState.Instance.gameStateInfo.unitDataDict[unitInfoID] = new UnitData();
+            CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID] = new UnitData();
             CopyUnitInfo(SpawnerScript.Instance.spawningUnitInfo);
         }
 
@@ -276,7 +277,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     {
         TurnManagerScript.Instance.OnStartTurn -= StartOwnersTurnRegen;
         TurnManagerScript.Instance.OnStartTurn -= TickDownBuffsOnOwnersTurn;
-        CurrentGameState.Instance.gameStateInfo.unitDataDict.Remove(unitInfoID);
+        CurrentGameState.Instance.gameStateData.unitDataDict.Remove(unitInfoID);
     }
     private void SetPlayerOwnershipRegistration(int newOwnerID)
     {
@@ -285,10 +286,10 @@ public class UnitInfo : MonoBehaviour, IDisplayable
             )
         {
             // Remove unit from existing owner
-            PlayerProperties owningPlayer = PlayerSetupScript.Instance.playerList.Find(x => x.playerID == ownerID);
+            PlayerProperties owningPlayer 
+                = PlayerSetupScript.Instance.playerList.Find(x => x.playerID == ownerID);
             if (owningPlayer != null)
-                owningPlayer.ownedObjectIds = owningPlayer.ownedObjectIds.Where(
-                    x => x != GetComponent<LocatableObject>().locatableID).ToList();
+                owningPlayer.ownedObjectIds.Remove(GetComponent<LocatableObject>().locatableID);
 
             // Register itself on its new owner's list of ownedObjects
             PlayerProperties newOwningPlayer = PlayerSetupScript.Instance.playerList.Find(x => x.playerID == newOwnerID);
@@ -327,6 +328,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
 
 public class UnitData
 {
+    public int? assignedMissionID = null;
     public int currentActions;
     /// <summary>
     /// This should always take a value between 0 and 1. It's a multiplier for damage and defence.

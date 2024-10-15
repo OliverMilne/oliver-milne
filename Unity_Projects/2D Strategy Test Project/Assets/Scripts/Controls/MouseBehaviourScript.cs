@@ -142,7 +142,8 @@ public class MouseBehaviourScript : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             if (false) { } // if the cursor is over the UI, don't act on a tile
-            else if (SelectorScript.Instance.selectedObject != null)
+            else if (SelectorScript.Instance.selectedObject != null
+                && TurnManagerScript.Instance.CurrentPlayer.playerID == PlayerProperties.humanPlayerID)
             {
                 try
                 {

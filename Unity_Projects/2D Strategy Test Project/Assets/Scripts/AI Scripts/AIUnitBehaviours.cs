@@ -4,13 +4,17 @@ using System.Linq;
 using System.Security.Cryptography;
 using UnityEngine;
 
-public class AIUnitGroupBehaviours : MonoBehaviour
+/// <summary>
+/// Also contains unit group behaviours; unit group behaviours don't fit the AI system, and
+/// so should only be used as group commands for player units.
+/// </summary>
+public class AIUnitBehaviours : MonoBehaviour
 {
-    public static void AttackNearestEnemyToHand(List<int> locatableIDs)
+    public static void AttackNearestEnemyToHand(List<int> locatableIDs, int orderingPlayerID)
     {
-        foreach (int objId in locatableIDs) AttackNearestEnemyToHand(objId);
+        foreach (int objId in locatableIDs) AttackNearestEnemyToHand(objId, orderingPlayerID);
     }
-    public static TileArrayEntry AttackNearestEnemyToHand(int locatableID)
+    public static TileArrayEntry AttackNearestEnemyToHand(int locatableID, int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -26,13 +30,33 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         if (destination != null)
         // Move obj there
         {
+            PlayerProperties.playersById[(int)orderingPlayerID].actions--;
             UnitMovement.Instance.MoveUnitDefault(
                 obj, destination, objUnitInfo.moveDistance.value);
             return destination;
         }
         else return obj.GetLocatableLocationTAE();
     }
-    public static TileArrayEntry ExploreUndirected(int locatableID)
+    public static TileArrayEntry AttackNearestVisibleEnemy(int locatableID, int orderingPlayerID)
+    {
+        LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
+        if (!obj.isUnit) return obj.GetLocatableLocationTAE();
+        UnitInfo objUnitInfo = obj.GetComponent<UnitInfo>();
+
+        TileArrayEntry destination = UnitMovement.Instance.GetQuickestReachableTileWithCondition(
+            obj, x => AITileScoringScripts.HasVisibleEnemyUnit(orderingPlayerID, x));
+
+        if (destination != null)
+        // Move obj there
+        {
+            PlayerProperties.playersById[(int)orderingPlayerID].actions--;
+            UnitMovement.Instance.MoveUnitDefault(
+                obj, destination, objUnitInfo.moveDistance.value);
+            return destination;
+        }
+        else return obj.GetLocatableLocationTAE();
+    }
+    public static TileArrayEntry ExploreUndirected(int locatableID, int? orderingPlayerID)
     {
         // if there's nowhere new to see, look further afield
         bool nothingNewToSee = true;
@@ -93,35 +117,36 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         // Move obj there
         if (highestScoringTile != null)
         {
+            if (orderingPlayerID != null) PlayerProperties.playersById[(int)orderingPlayerID].actions--;
             UnitMovement.Instance.MoveUnitDefault(
                 obj, highestScoringTile, objUnitInfo.moveDistance.value);
             return highestScoringTile;
         }
         else throw new System.Exception("ExploreUndirected target selection error!");
     }
-    public static TileArrayEntry GroupExploreUndirected(List<int> locatableIDs)
+    public static TileArrayEntry GroupExploreUndirected(List<int> locatableIDs, int orderingPlayerID)
     {
         int selectIndex = Random.Range(0, locatableIDs.Count);
         int leaderID = locatableIDs[selectIndex];
-        TileArrayEntry leaderDestination = ExploreUndirected(leaderID);
+        TileArrayEntry leaderDestination = ExploreUndirected(leaderID, orderingPlayerID);
         foreach (int objId in locatableIDs.Where(x => x != leaderID))
-            MillNear(objId, leaderDestination.TileLoc);
+            MillNear(objId, leaderDestination.TileLoc, orderingPlayerID);
         return leaderDestination;
     }
-    public static TileArrayEntry GroupMillAndAttack(List<int> locatableIDs)
+    public static TileArrayEntry GroupMillAndAttack(List<int> locatableIDs, int orderingPlayerID)
     {
         int selectIndex = Random.Range(0, locatableIDs.Count);
         int leaderID = locatableIDs[selectIndex];
-        TileArrayEntry leaderDestination = MillAndAttack(leaderID);
+        TileArrayEntry leaderDestination = MillAndAttack(leaderID, orderingPlayerID);
         foreach (int objId in locatableIDs.Where(x => x != leaderID))
-            MillNearAndAttack(objId, leaderDestination.TileLoc);
+            MillNearAndAttack(objId, leaderDestination.TileLoc, orderingPlayerID);
         return leaderDestination;
     }
-    public static void MillAboutRandomly(List<int> locatableIDs)
+    public static void MillAboutRandomly(List<int> locatableIDs, int orderingPlayerID)
     {
-        foreach (int objId in locatableIDs) MillAboutRandomly(objId);
+        foreach (int objId in locatableIDs) MillAboutRandomly(objId, orderingPlayerID);
     }
-    public static TileArrayEntry MillAboutRandomly(int locatableID)
+    public static TileArrayEntry MillAboutRandomly(int locatableID, int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -135,14 +160,15 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         TileArrayEntry destination = reachableTiles[selectIndex];
 
         // Move obj there
+        PlayerProperties.playersById[(int)orderingPlayerID].actions--;
         UnitMovement.Instance.MoveUnitDefault(obj, destination, objUnitInfo.moveDistance.value);
         return destination;
     }
-    public static void MillAndAttack(List<int> locatableIDs)
+    public static void MillAndAttack(List<int> locatableIDs, int orderingPlayerID)
     {
-        foreach (int objId in locatableIDs) MillAndAttack(objId);
+        foreach (int objId in locatableIDs) MillAndAttack(objId, orderingPlayerID);
     }
-    public static TileArrayEntry MillAndAttack(int locatableID)
+    public static TileArrayEntry MillAndAttack(int locatableID, int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -150,10 +176,10 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         Debug.Log("Unit " + objUnitInfo.unitInfoID + " is milling and attacking");
 
         if (AIUnitStatus.HasVisibleEnemyInMovementRange(objUnitInfo))
-            return AttackNearestEnemyToHand(locatableID);
-        else return MillAboutRandomly(locatableID);
+            return AttackNearestEnemyToHand(locatableID, orderingPlayerID);
+        else return MillAboutRandomly(locatableID, orderingPlayerID);
     }
-    public static TileArrayEntry MillNear(int locatableID, Vector3Int targetLoc)
+    public static TileArrayEntry MillNear(int locatableID, Vector3Int targetLoc, int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -169,10 +195,12 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         TileArrayEntry destination = adjacentTAEs[selectIndex];
 
         // Go there
+        PlayerProperties.playersById[(int)orderingPlayerID].actions--;
         UnitMovement.Instance.MoveUnitDefault(obj, destination, objUnitInfo.moveDistance.value);
         return destination;
     }
-    public static TileArrayEntry MillNearAndAttack(int locatableID, Vector3Int targetLoc)
+    public static TileArrayEntry MillNearAndAttack(int locatableID, Vector3Int targetLoc, 
+        int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
         if (!obj.isUnit) return obj.GetLocatableLocationTAE();
@@ -180,12 +208,26 @@ public class AIUnitGroupBehaviours : MonoBehaviour
         Debug.Log("Unit " + objUnitInfo.unitInfoID + " is hanging near " + targetLoc);
 
         if (AIUnitStatus.HasVisibleEnemyInMovementRange(objUnitInfo))
-            return AttackNearestEnemyToHand(locatableID);
-        else return MillNear(locatableID, targetLoc);
+            return AttackNearestEnemyToHand(locatableID, orderingPlayerID);
+        else return MillNear(locatableID, targetLoc, orderingPlayerID);
     }
-    public static TileArrayEntry MillNearAndAttack(int locatableID, int associateID)
+    public static TileArrayEntry MillNearAndAttack(int locatableID, int associateID, int orderingPlayerID)
     {
         LocatableObject obj = LocatableObject.locatableObjectsById[associateID];
-        return MillNearAndAttack(locatableID, obj.GetLocatableLocationTAE().TileLoc);
+        return MillNearAndAttack(locatableID, obj.GetLocatableLocationTAE().TileLoc, orderingPlayerID);
+    }
+    public static TileArrayEntry MoveToPoint(int locatableID, TileArrayEntry destination,
+        int orderingPlayerID)
+    {
+        LocatableObject obj = LocatableObject.locatableObjectsById[locatableID];
+        if (!obj.isUnit) return obj.GetLocatableLocationTAE();
+        UnitInfo objUnitInfo = obj.GetComponent<UnitInfo>();
+
+        {
+            PlayerProperties.playersById[(int)orderingPlayerID].actions--;
+            UnitMovement.Instance.MoveUnitDefault(
+                obj, destination, objUnitInfo.moveDistance.value);
+            return destination;
+        }
     }
 }

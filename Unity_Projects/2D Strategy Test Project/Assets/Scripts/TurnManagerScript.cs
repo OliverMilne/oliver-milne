@@ -13,29 +13,29 @@ public class TurnManagerScript : MonoBehaviour
     // stuff from the CurrentGameState
     public int TurnCounter 
     { 
-        get => CurrentGameState.Instance.gameStateInfo.turnInfo["TurnCounter"];  
+        get => CurrentGameState.Instance.gameStateData.turnData["TurnCounter"];  
         private set 
-        { CurrentGameState.Instance.gameStateInfo.turnInfo["TurnCounter"] = value; }
+        { CurrentGameState.Instance.gameStateData.turnData["TurnCounter"] = value; }
     }
     private int _currentPlayerIndex  // index of the current player in _players
     {
-        get => CurrentGameState.Instance.gameStateInfo.turnInfo["currentPlayerIndex"];
+        get => CurrentGameState.Instance.gameStateData.turnData["currentPlayerIndex"];
         set
         {
             try
             {
-                CurrentGameState.Instance.gameStateInfo.turnInfo["previousPlayerIndex"] = _currentPlayerIndex;
+                CurrentGameState.Instance.gameStateData.turnData["previousPlayerIndex"] = _currentPlayerIndex;
             }
             catch { }
-            CurrentGameState.Instance.gameStateInfo.turnInfo["currentPlayerIndex"] = value;
+            CurrentGameState.Instance.gameStateData.turnData["currentPlayerIndex"] = value;
         }
     }
     private int _previousPlayerIndex
     {
-        get => CurrentGameState.Instance.gameStateInfo.turnInfo["previousPlayerIndex"];
+        get => CurrentGameState.Instance.gameStateData.turnData["previousPlayerIndex"];
         set
         {
-            CurrentGameState.Instance.gameStateInfo.turnInfo["previousPlayerIndex"] = value;
+            CurrentGameState.Instance.gameStateData.turnData["previousPlayerIndex"] = value;
         }
     }
 
@@ -51,6 +51,24 @@ public class TurnManagerScript : MonoBehaviour
 
     // internal functionality stuff
     private bool _hasInitialised = false;
+    public bool EndTurnOnUpdate
+    {
+        get 
+        {
+            if (!CurrentGameState.Instance.gameStateData.turnData.ContainsKey("EndTurnOnUpdate"))
+            {
+                CurrentGameState.Instance.gameStateData.turnData["EndTurnOnUpdate"] = 0;
+                return false;
+            }
+            else if (CurrentGameState.Instance.gameStateData.turnData["EndTurnOnUpdate"] == 0) return false;
+            else return true;
+        }
+        set 
+        { 
+            if (value) CurrentGameState.Instance.gameStateData.turnData["EndTurnOnUpdate"] = 1;
+            else CurrentGameState.Instance.gameStateData.turnData["EndTurnOnUpdate"] = 0;
+        }
+    }
 
     // Unity interface hookups
     public GameObject EndTurnButtonText;
@@ -81,6 +99,7 @@ public class TurnManagerScript : MonoBehaviour
             _hasInitialised = true;
         }
     }
+
     public void EndTurn() 
     {
         OnEndTurn();
@@ -90,7 +109,7 @@ public class TurnManagerScript : MonoBehaviour
         if (_currentPlayerIndex == 0) TurnCounter++;
 
         OnStartTurn();
-        PlayerAIMasterScript.Instance.PlayerTurnAiCaller();
+        StartCoroutine(PlayerAIMasterScript.Instance.PlayerTurnAiCaller());
     }
 
     // only stuff that should happen every OnEndTurn
@@ -103,8 +122,13 @@ public class TurnManagerScript : MonoBehaviour
     private void MinimalStartTurn()
     {
         OverlayGraphicsScript.Instance.DrawSelectionGraphics(SelectorScript.Instance.selectedObject);
+        UIControlScript.Instance.ShowPlayerDetails();
         // Debug.Log("OnStartTurn fired. Current player: " + CurrentPlayer.playerName);
     }
 
     public void StartFirstTurn() { OnStartTurn(); }
+    public void Update()
+    {
+        if (EndTurnOnUpdate) { EndTurnOnUpdate = false; EndTurn(); }
+    }
 }

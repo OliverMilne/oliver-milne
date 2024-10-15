@@ -40,8 +40,8 @@ public class HotkeysScript : MonoBehaviour
             && _selectorScript.selectedObject.GetComponent<LocatableObject>().isUnit)
         {
             // immediately make the selected unit autoexplore
-            AIUnitGroupBehaviours.ExploreUndirected(
-                _selectorScript.selectedObject.locatableObject.locatableID);
+            AIUnitBehaviours.ExploreUndirected(
+                _selectorScript.selectedObject.locatableObject.locatableID, PlayerProperties.humanPlayerID);
         }
         // apply movement buff
         if (Input.GetKeyDown(KeyCode.B) && _selectorScript.selectedObject != null
@@ -89,12 +89,12 @@ public class HotkeysScript : MonoBehaviour
             LocatableObject.WipeAllLocatableObjectsAndReset();
             ReportTileContentsCount();
         }
-        // render stat bar background on selected unit
+        // show two move accessible tiles on selected unit
         if (Input.GetKeyDown(KeyCode.R) && _selectorScript.selectedObject != null
             && _selectorScript.selectedObject.GetComponent<LocatableObject>().isUnit)
         {
-            _selectorScript.selectedObject.GetComponent<UnitGraphicsController>()
-                .RenderUnitBarBackground();
+            OverlayGraphicsScript.Instance.DebugTemporaryOverlay(
+                _selectorScript.selectedObject.GetComponent<LocatableObject>(), 2);
         }
         // save game
         if (Input.GetKeyDown(KeyCode.S))
@@ -139,7 +139,7 @@ public class HotkeysScript : MonoBehaviour
                 foreach (GameObject overlay in _debugOverlays) GameObject.Destroy(overlay);
                 _debugOverlays.Clear();
             }
-            else foreach (var entry in CurrentGameState.Instance.gameStateInfo.locatablesInfoDict)
+            else foreach (var entry in CurrentGameState.Instance.gameStateData.locatableDataDict)
                 {
                     if (entry.Value.isUnit
                         && LocatableObject.locatableObjectsById[entry.Key]

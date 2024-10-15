@@ -41,11 +41,11 @@ public class InitialiserScript : MonoBehaviour
         
         // This is the point at which all the LocatableObjects have to be created
         spawnCount = 0;
-        foreach (int locatableID in CurrentGameState.Instance.gameStateInfo.locatablesInfoDict.Keys)
+        foreach (int locatableID in CurrentGameState.Instance.gameStateData.locatableDataDict.Keys)
         {
-            if (CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isScenery)
+            if (CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isScenery)
                 SceneryManager.Instance.SpawnSceneryFromGameStateInfo(locatableID);
-            else if (CurrentGameState.Instance.gameStateInfo.locatablesInfoDict[locatableID].isUnit)
+            else if (CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isUnit)
                 SpawnerScript.Instance.SpawnUnitFromGameStateInfo(locatableID);
         }
         // Debug.Log("Spawned " + spawnCount + " LocatableObjects");

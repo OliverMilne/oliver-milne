@@ -38,7 +38,7 @@ public class PlayerSetupScript : MonoBehaviour
     {
         playerList = new List<PlayerProperties>();
         PlayerProperties.ResetPlayers();
-        foreach(var playerDataEntry in CurrentGameState.Instance.gameStateInfo.playerDataDict)
+        foreach(var playerDataEntry in CurrentGameState.Instance.gameStateData.playerDataDict)
         {
             PlayerProperties.nextPlayerID = playerDataEntry.Key;
             var player = Instantiate(playerPrefab);
