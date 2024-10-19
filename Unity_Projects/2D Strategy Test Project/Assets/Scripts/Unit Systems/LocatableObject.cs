@@ -149,6 +149,7 @@ public class LocatableObject : MonoBehaviour
         // mark all this complete
         _preparedForDeath = true;
     }
+    // This is called BEFORE resetting/loading the gamestate, so can't use gamestate IDDispensers.
     public static void WipeAllLocatableObjectsAndReset()
     {
         List<LocatableObject> allLocatables = locatableObjectsById.Values.ToList();

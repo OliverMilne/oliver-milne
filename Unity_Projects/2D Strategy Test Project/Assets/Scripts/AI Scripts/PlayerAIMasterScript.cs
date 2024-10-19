@@ -12,7 +12,10 @@ public class PlayerAIMasterScript : MonoBehaviour
     public static PlayerAIMasterScript Instance { get { return instance; } }
 
     private bool _isInitialised = false;
-    public bool AIWaitingForActionComplete = false;
+    /// <summary>
+    /// This should be incremented and decremented in the coroutines, i.e. at the lowest level.
+    /// </summary>
+    public int ActionsAIWaitingToFinish = 0;
     private bool PlayerAIIsDone = false;
 
     private void Awake()
@@ -46,37 +49,17 @@ public class PlayerAIMasterScript : MonoBehaviour
             if (loopBreaker == 2000) throw new System.Exception("Player action loop hit limit!");
 
             // assess situation and modify missions as appropriate
-            if (playerProperties.ownedObjectIds.Count == 0) 
+            if (AssessSituationAndModifyMissions(playerProperties)) 
                 { Debug.Log($"Player {playerProperties.playerID} owns no objects!"); break; }
 
-            // for now, we just create a Search and Destroy mission if there are unassigned units
-            List<int> unassignedUnitIDs = playerProperties.objectMissionAssignment.Keys.
-                Where(x => playerProperties.objectMissionAssignment[x] == null).ToList();
-            if (unassignedUnitIDs.Count > 0)
-            {
-                AIMission newMission = new AIMission_SearchAndDestroy(playerProperties.playerID);
-                playerProperties.aIMissions.Add(newMission.aIMissionID, newMission);
-                foreach (var x in unassignedUnitIDs) playerProperties.aIMissions[0].AssignUnit(x);
-            }
-
             // assign remaining actions to missions according to mission priority & action requests
-            Dictionary<int, int> missionActionRequests = new Dictionary<int, int>();
-            foreach (var pair in playerProperties.aIMissions)
-                missionActionRequests[pair.Key] = pair.Value.MakeActionRequest();
-            AIMission nextMission = null;
-            foreach (var missionID in missionActionRequests.Keys)
-                if (missionActionRequests[missionID] > 0)
-                {
-                    nextMission = playerProperties.aIMissions[missionID];
-                    break;
-                }
+            AIMission nextMission = PickNextMissionToAct(playerProperties);
             if (nextMission == null) break;
 
             // perform 1 action and wait for it to play out
-            AIWaitingForActionComplete = true;
             nextMission.PerformNextAction();
             // Debug.Log($"playerProperties.ownedObjectIds[0]: {playerProperties.ownedObjectIds[0]}");
-            while (AIWaitingForActionComplete) yield return null;
+            while (ActionsAIWaitingToFinish > 0) yield return null;
         }
         PlayerAIIsDone = true;
         yield break;
@@ -88,7 +71,7 @@ public class PlayerAIMasterScript : MonoBehaviour
     {
         if (TurnManagerScript.Instance.CurrentPlayer.isHumanPlayer) yield break;
 
-        while (AIWaitingForActionComplete) yield return null;
+        while (ActionsAIWaitingToFinish > 0) yield return null;
         Debug.Log("PlayerTurnAICaller ready to call PlayerAIDoStuff");
 
         PlayerAIIsDone = false;
@@ -99,4 +82,41 @@ public class PlayerAIMasterScript : MonoBehaviour
         TurnManagerScript.Instance.EndTurnOnUpdate = true;
         yield break;
     }
+    #region PlayerAIDoStuff steps
+    /// <summary>
+    /// Should return 'true' if it indicates the PlayerAIDoStuff 'while' loop should be broken.
+    /// </summary>
+    /// <param name="playerProperties"></param>
+    /// <returns></returns>
+    private bool AssessSituationAndModifyMissions(PlayerProperties playerProperties)
+    {
+        if (playerProperties.ownedObjectIds.Count == 0) return true;
+
+        // for now, we just create a Search and Destroy mission if there are unassigned units
+        List<int> unassignedUnitIDs = playerProperties.objectMissionAssignment.Keys.
+            Where(x => playerProperties.objectMissionAssignment[x] == null).ToList();
+        if (unassignedUnitIDs.Count > 0)
+        {
+            AIMission newMission = new AIMission_SearchAndDestroy(playerProperties.playerID);
+            foreach (var x in unassignedUnitIDs) 
+                playerProperties.aIMissions[newMission.aIMissionID].AssignUnit(x);
+        }
+
+        return false;
+    }
+    private AIMission PickNextMissionToAct(PlayerProperties playerProperties)
+    {
+        Dictionary<int, int> missionActionRequests = new Dictionary<int, int>();
+        foreach (var pair in playerProperties.aIMissions)
+            missionActionRequests[pair.Key] = pair.Value.MakeActionRequest();
+        AIMission nextMission = null;
+        foreach (var missionID in missionActionRequests.Keys)
+            if (missionActionRequests[missionID] > 0)
+            {
+                nextMission = playerProperties.aIMissions[missionID];
+                break;
+            }
+        return nextMission;
+    }
+    #endregion
 }

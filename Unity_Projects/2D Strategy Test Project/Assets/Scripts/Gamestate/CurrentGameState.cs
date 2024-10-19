@@ -19,7 +19,7 @@ public sealed class CurrentGameState
     // here is the GameStateInfo that actually holds all the data
     public GameStateData gameStateData = new GameStateData();
 
-    public void NewGameStateInfo()
+    public void NewGameStateData()
     {
         gameStateData = new GameStateData();
     }
@@ -27,7 +27,7 @@ public sealed class CurrentGameState
     // later will add proper save path functionality
     public void LoadGameStateInfo()
     {
-        NewGameStateInfo();
+        NewGameStateData();
         gameStateData = JsonConvert.DeserializeObject<GameStateData>(
             File.ReadAllText( @"D:\Users\User\The Fat Of The Land\Save Files\MonoSaveForTesting.json"));
     }

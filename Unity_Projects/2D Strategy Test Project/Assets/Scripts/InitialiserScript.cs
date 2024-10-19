@@ -69,7 +69,7 @@ public class InitialiserScript : MonoBehaviour
         // Wipe all preexisting stuff
         SelectorScript.Instance.ClearSelection();
         LocatableObject.WipeAllLocatableObjectsAndReset();
-        CurrentGameState.Instance.NewGameStateInfo();
+        CurrentGameState.Instance.NewGameStateData();
 
         // Initialise scripts in dependency-safe order
         SpawnerScript.Instance.SpawnerScript_Initialise();

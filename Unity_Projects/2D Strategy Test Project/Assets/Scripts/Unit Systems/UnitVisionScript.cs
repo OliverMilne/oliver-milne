@@ -39,6 +39,14 @@ public class UnitVisionScript : MonoBehaviour
     {
         return getVisibleTiles(vantagePoint, visionRange, false, -2);
     }
+    /// <summary>
+    /// This override is for working out the ExplorationPotential of a tile, so it ignores scenery
+    /// on tiles that aren't already Explored or Visible.
+    /// </summary>
+    /// <param name="vantagePoint"></param>
+    /// <param name="visionRange"></param>
+    /// <param name="playerID"></param>
+    /// <returns></returns>
     public List<TileArrayEntry>[] getVisibleTiles(
         TileArrayEntry vantagePoint, int visionRange, int playerID)
     {
@@ -77,10 +85,10 @@ public class UnitVisionScript : MonoBehaviour
         foreach (TileArrayEntry tae 
             in tilesInVisionRange.Keys.Where(x => tilesInVisionRange[x] > 0))
         {
-            // check for cliffs pointing at locatable's tile
+            // check for forests, cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
                 vantagePoint);
-            if (tae.hasCliffsByDirection[directionTaeToLocatable] 
+            if ((tae.hasCliffsByDirection[directionTaeToLocatable] || tae.hasForest)
                 && !(ignoreHiddenScenery 
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
                 isObscuredDict[tae.taeID] = true;
@@ -133,10 +141,7 @@ public class UnitVisionScript : MonoBehaviour
                 TileArrayEntry neighbourTae 
                     = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                     tae.AdjacentTileLocsByDirection[directionTaeToLocatable]);
-                if (neighbourTae.hasCliffsByDirection[
-                    HexOrientation.Opposite(directionTaeToLocatable)]
-                    && !(ignoreHiddenScenery
-                    && neighbourTae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
+                if (neighbourTae.hasCliffsByDirection[HexOrientation.Opposite(directionTaeToLocatable)])
                     isObscuredDict[tae.taeID] = true;
             }
             catch { }
@@ -153,6 +158,19 @@ public class UnitVisionScript : MonoBehaviour
             if (tae.hasCliffsByDirection[directionTaeToLocatable]
                 && !(ignoreHiddenScenery
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
+            {
+                isObscuredDict[tae.taeID] = true;
+                showExploredDict[tae.taeID] = true;
+            }
+        }
+
+        // Switch non-adjacent forests to explored instead of visible
+        foreach (TileArrayEntry tae
+            in tilesInVisionRange.Keys.Where(
+                x => tilesInVisionRange[x] > 1 && !isObscuredDict[x.taeID]))
+        {
+            if (tae.hasForest && 
+                !(ignoreHiddenScenery && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
             {
                 isObscuredDict[tae.taeID] = true;
                 showExploredDict[tae.taeID] = true;

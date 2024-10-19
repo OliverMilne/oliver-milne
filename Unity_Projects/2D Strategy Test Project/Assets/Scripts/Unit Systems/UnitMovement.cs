@@ -47,6 +47,14 @@ public class UnitMovement : MonoBehaviour
         }
         return previewMarkers;
     }
+    /// <summary>
+    /// Note that 'accountForVisibility' doesn't affect whether the algo detects a tile fits the
+    /// eligibility condition, only what it thinks the quickest path to it is
+    /// </summary>
+    /// <param name="unitLoco"></param>
+    /// <param name="eligibilityCondition"></param>
+    /// <param name="accountForVisibility"></param>
+    /// <returns></returns>
     public TileArrayEntry GetQuickestReachableTileWithCondition(LocatableObject unitLoco,
         Predicate<TileArrayEntry> eligibilityCondition, bool accountForVisibility = true)
     {
@@ -57,15 +65,27 @@ public class UnitMovement : MonoBehaviour
             accountForVisibility,
             MoveType.Foot);
     }
+    /// <summary>
+    /// Note that 'accountForVisibility' doesn't affect whether the algo detects a tile fits the
+    /// eligibility condition, only what it thinks the quickest path to it is
+    /// </summary>
+    /// <param name="startLocation"></param>
+    /// <param name="eligibilityCondition"></param>
+    /// <param name="visibilityPlayerID"></param>
+    /// <param name="accountForVisibility"></param>
+    /// <param name="moveType"></param>
+    /// <returns></returns>
     public TileArrayEntry GetQuickestReachableTileWithCondition(Vector3Int startLocation,
         Predicate<TileArrayEntry> eligibilityCondition, 
         int visibilityPlayerID, bool accountForVisibility = true, 
         MoveType moveType = MoveType.Foot)
     {
         Dictionary<int, bool> checkDict = new Dictionary<int, bool>();
+        Dictionary<int, int> moveCostToTile = new();
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
         {
             checkDict[t.taeID] = false;
+            moveCostToTile[t.taeID] = int.MaxValue/2;
         }
 
         List<TileArrayEntry> reachableTiles = new List<TileArrayEntry>();
@@ -73,6 +93,7 @@ public class UnitMovement : MonoBehaviour
             = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(startLocation);
         reachableTiles.Add(startLocationTAE);
         checkDict[startLocationTAE.taeID] = true;
+        moveCostToTile[startLocationTAE.taeID] = 0;
 
         List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
         int distanceTravelled = 0;
@@ -80,7 +101,9 @@ public class UnitMovement : MonoBehaviour
         while (loopBreaker++ < 2000)
         {
             tilesToAdd.Clear();
-            foreach (TileArrayEntry tile in reachableTiles)
+            // here we accommodate for variable move costs
+            foreach (TileArrayEntry tile 
+                in reachableTiles.Where(x => moveCostToTile[x.taeID] == distanceTravelled))
             {
                 foreach (TileArrayEntry nextTile in tile.GetAccessibleTAEs())
                 {
@@ -93,25 +116,34 @@ public class UnitMovement : MonoBehaviour
                             if (eligibilityCondition(nextTile)) return nextTile;
                             tilesToAdd.Add(nextTile);
                             checkDict[nextTile.taeID] = true;
+                            if (accountForVisibility
+                                && nextTile.IsTileHiddenWithOverrides(visibilityPlayerID))
+                                moveCostToTile[nextTile.taeID]
+                                    = Math.Min(moveCostToTile[nextTile.taeID],
+                                    moveCostToTile[tile.taeID] + 1);
+                            else moveCostToTile[nextTile.taeID]
+                                = Math.Min(moveCostToTile[nextTile.taeID],
+                                moveCostToTile[tile.taeID] + nextTile.MoveCost);
                         }
                     }
                 }
                 // if it's counting hidden tiles as passable, add adjacent hidden tiles
                 if (accountForVisibility)
                 {
-                    foreach (TileArrayEntry nextTile in tile.GetAdjacentTAEs())
+                    foreach (TileArrayEntry nextTile 
+                        in tile.GetAccessibleTAEs(false,!tile.IsTileHiddenWithOverrides(visibilityPlayerID)))
                     {
                         // see if it's in reachableTiles or tilesToAdd
                         if (nextTile != null
-                            && nextTile.GetVisibilityByPlayerID(visibilityPlayerID)
-                            == TileVisibility.Hidden
-                            && !(nextTile.forceVisible
-                            && visibilityPlayerID == PlayerProperties.humanPlayerID))
+                            && nextTile.IsTileHiddenWithOverrides(visibilityPlayerID))
                         {
                             if (!checkDict[nextTile.taeID])
                             { // if not, add it to tilesToAdd
                                 tilesToAdd.Add(nextTile);
                                 checkDict[nextTile.taeID] = true;
+                                moveCostToTile[nextTile.taeID] 
+                                    = Math.Min(moveCostToTile[nextTile.taeID], 
+                                    moveCostToTile[tile.taeID] + 1);
                             }
                         }
                     }
@@ -145,9 +177,11 @@ public class UnitMovement : MonoBehaviour
         bool accountForVisibility = true)
     {
         Dictionary<int, bool> checkDict = new Dictionary<int, bool>();
+        Dictionary<int, int> distanceDict = new();
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)
         {
             checkDict[t.taeID] = false;
+            distanceDict[t.taeID] = int.MaxValue/2;
         }
 
         List<TileArrayEntry> reachableTiles = new List<TileArrayEntry>();
@@ -155,49 +189,61 @@ public class UnitMovement : MonoBehaviour
             = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(startLocation);
         reachableTiles.Add(startLocationTAE);
         checkDict[ startLocationTAE.taeID] = true;
+        distanceDict[startLocationTAE.taeID] = 0;
 
         List<TileArrayEntry> tilesToAdd = new List<TileArrayEntry>();
-        int distanceTravelled = 0;
-        while (distanceTravelled < maxMoveDistance)
+        int minDistanceTravelled = 0;
+        while (minDistanceTravelled < maxMoveDistance)
         {
             tilesToAdd.Clear();
-            foreach (TileArrayEntry tile in reachableTiles)
+            // note we're not propagating from tiles that are at maximum move range!
+            foreach (TileArrayEntry tile 
+                in reachableTiles.Where(x => distanceDict[x.taeID] < maxMoveDistance))
             {
                 foreach (TileArrayEntry nextTile in tile.GetAccessibleTAEs())
                 {
-                    // see if it's in reachableTiles or tilesToAdd
                     if (nextTile != null)
                     {
+                        // see if it's in reachableTiles or tilesToAdd
                         if (!checkDict[ nextTile.taeID])
                         { // if not, add it to tilesToAdd
                             tilesToAdd.Add(nextTile);
                             checkDict[nextTile.taeID] = true;
+                            if (accountForVisibility 
+                                && nextTile.IsTileHiddenWithOverrides(visibilityPlayerID))
+                                distanceDict[nextTile.taeID]
+                                    = Math.Min(distanceDict[nextTile.taeID],
+                                    distanceDict[tile.taeID] + 1);
+                            else distanceDict[nextTile.taeID]
+                                    = Math.Min(distanceDict[nextTile.taeID],
+                                    distanceDict[tile.taeID] + nextTile.MoveCost);
                         }
                     }
                 }
                 // if it's counting hidden tiles as passable, add adjacent hidden tiles
                 if (accountForVisibility)
                 {
-                    foreach (TileArrayEntry nextTile in tile.GetAdjacentTAEs())
+                    foreach (TileArrayEntry nextTile 
+                        in tile.GetAccessibleTAEs(false, !tile.IsTileHiddenWithOverrides(visibilityPlayerID)))
                     {
                         // see if it's in reachableTiles or tilesToAdd
                         if (nextTile != null
-                            && nextTile.GetVisibilityByPlayerID(visibilityPlayerID)
-                            == TileVisibility.Hidden
-                            && !(nextTile.forceVisible
-                            && visibilityPlayerID == PlayerProperties.humanPlayerID))
+                            && nextTile.IsTileHiddenWithOverrides(visibilityPlayerID))
                         {
                             if (!checkDict[ nextTile.taeID])
                             { // if not, add it to tilesToAdd
                                 tilesToAdd.Add(nextTile);
                                 checkDict[nextTile.taeID] = true;
+                                distanceDict[nextTile.taeID]
+                                    = Math.Min(distanceDict[nextTile.taeID],
+                                    distanceDict[tile.taeID] + 1);
                             }
                         }
                     }
                 }
             }
             reachableTiles.AddRange(tilesToAdd);
-            distanceTravelled++;
+            minDistanceTravelled++;
             if (tilesToAdd.Count == 0) break;
         }
         return reachableTiles;
@@ -224,7 +270,7 @@ public class UnitMovement : MonoBehaviour
             StartCoroutine(MoveAlongPath(unit, movementPath, maxMoveDistance));
             return true;
         }
-        else { PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false; return false; }
+        else { return false; }
     }
     public List<GameObject> MoveUnitPreview(LocatableObject unit, TileArrayEntry target, 
         int maxMoveDistance)
@@ -237,8 +283,7 @@ public class UnitMovement : MonoBehaviour
             new List<int> { target.taeID })[target.taeID] > maxDrawDistance)
             return previewMarkers;
         if (!target.isPassable 
-            && (target.GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) 
-            != TileVisibility.Hidden || target.forceVisible)) 
+            && target.IsTileHiddenWithOverrides(PlayerProperties.humanPlayerID)) 
             return previewMarkers;
 
         // Get the movement path
@@ -271,24 +316,26 @@ public class UnitMovement : MonoBehaviour
     private static IEnumerator MoveAlongPath(
         LocatableObject unit, List<TileArrayEntry> movementPath, int maxSteps)
     {
+        PlayerAIMasterScript.Instance.ActionsAIWaitingToFinish++;
         if (movementPath.Count < 2) 
         { 
             Debug.Log("Path too short!");
-            PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+            PlayerAIMasterScript.Instance.ActionsAIWaitingToFinish--;
             yield break; 
         }
-        int i = 1;
-        while (i <= maxSteps && i < movementPath.Count)
+        int tilesMoved = 1;
+        int moveExpended = 0;
+        while (moveExpended < maxSteps && tilesMoved < movementPath.Count)
         {
             // stop if you can't access the next tile
-            if (!movementPath[i - 1].GetAccessibleTAEs().Contains(movementPath[i])) 
+            if (!movementPath[tilesMoved - 1].GetAccessibleTAEs().Contains(movementPath[tilesMoved])) 
             {
                 Debug.Log("Path blocked!");
-                PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+                PlayerAIMasterScript.Instance.ActionsAIWaitingToFinish--;
                 yield break; 
             }
             // do something (probably attack) if you encounter an enemy unit
-            else foreach (int id in movementPath[i].tileContentsIds)
+            else foreach (int id in movementPath[tilesMoved].tileContentsIds)
             {
                 if (LocatableObject.locatableObjectsById[id].isUnit)
                     {
@@ -297,18 +344,21 @@ public class UnitMovement : MonoBehaviour
                         UnitInfo movingUnitInfo = unit.GetComponent<UnitInfo>();
                         if (encounteredUnitInfo.ownerID != movingUnitInfo.ownerID)
                         {
-                            unit.GetComponent<UnitBehaviour>().MeleeAttackTile(movementPath[i]);
+                            unit.GetComponent<UnitBehaviour>().MeleeAttackTile(movementPath[tilesMoved]);
                             // Debug.Log("Unit " + movingUnitInfo.unitInfoID + " attacked tile at " + movementPath[i].TileLoc);
-                            PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+                            PlayerAIMasterScript.Instance.ActionsAIWaitingToFinish--;
                             yield break;
                         }
                     }
             }
-            unit.DebugMoveToTile(movementPath[i]); // this'll need replacing with a movement animation
-            i++;
+            unit.DebugMoveToTile(movementPath[tilesMoved]); // this'll need replacing with a movement animation
+            // this should allow moving to any adjacent accessible tile,
+            // even if move cost > remaining moves
+            moveExpended += movementPath[tilesMoved].MoveCost;
+            tilesMoved++;
             yield return new WaitForSeconds(0.1f);
         }
-        PlayerAIMasterScript.Instance.AIWaitingForActionComplete = false;
+        PlayerAIMasterScript.Instance.ActionsAIWaitingToFinish--;
         yield break;
     }
     public static List<TileArrayEntry> AStarPathCalculator(
@@ -434,7 +484,7 @@ public class UnitMovement : MonoBehaviour
             // to avoid race conditions if current is also another currentList member's neighbour
             int cachedLeastStepsCurrent = leastStepsFromStart[current.taeID];
                 
-            // get different lists of neighbours depending on whether canMislead is true
+            // get different lists of neighbours depending on whether accpuntForVisibility is true
             List<TileArrayEntry> validNeighbours = current.GetAccessibleTAEs().Where(
             x => tilesToTryDict[x.taeID]).ToList();
             if (accountForVisibility) validNeighbours.AddRange(
@@ -444,19 +494,20 @@ public class UnitMovement : MonoBehaviour
                     // this one'll cause race conditions if the whole method is multi-threaded
                     // best answer I guess is to make sure nothing is done with the output
                     // if tile visibility changes, using TileArrayEntry.tileUpdateNumber checks
-                    && x.GetVisibilityByPlayerID(visibilityPlayerID) == TileVisibility.Hidden
-                    && !x.forceVisible
+                    && x.IsTileHiddenWithOverrides(visibilityPlayerID)
                     && !(current.hasCliffsByDirection[
                         current.AdjacentTileLocsByDirection.Where(
                             y => y.Value == x.TileLoc).ToList().First().Key]
-                        && current.GetVisibilityByPlayerID(visibilityPlayerID) 
-                        != TileVisibility.Hidden)
+                        && current.IsTileHiddenWithOverrides(visibilityPlayerID))
                     ).ToList());
 
             foreach (TileArrayEntry neighbour in validNeighbours)
             {
-                // when there are tile weights, substitute that here
-                int tentativeGScore = cachedLeastStepsCurrent + 1;
+                int tentativeGScore;
+                // this is where movement costs are factored in
+                if (accountForVisibility && neighbour.IsTileHiddenWithOverrides(visibilityPlayerID))
+                    tentativeGScore = cachedLeastStepsCurrent + 1;
+                else tentativeGScore = cachedLeastStepsCurrent + neighbour.MoveCost;
                         
                 // if you've just found a faster way to get to neighbour than previously,
                 // update everything to reflect that
@@ -469,7 +520,7 @@ public class UnitMovement : MonoBehaviour
                         = tentativeGScore + DistanceEstimate(neighbour, target);
                     // you just found a faster way to get to neighbour,
                     // so you have to look at onward connections from there
-                    if (!openSetDict[ neighbour.taeID])
+                    if (!openSetDict[neighbour.taeID])
                     {
                         openSet.Add(neighbour);
                         openSetDict[neighbour.taeID] = true;

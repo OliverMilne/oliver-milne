@@ -15,6 +15,12 @@ public enum MoveType
 {
     Foot
 }
+public enum SceneryType
+{
+    Cliff,
+    Forest,
+    NULL
+}
 public enum TileVisibility
 {
     Hidden,

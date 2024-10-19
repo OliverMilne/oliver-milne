@@ -34,14 +34,11 @@ public abstract class AIMission : IDisposable
     {
         aIMissionID = CurrentGameState.Instance.gameStateData.iDDispensers["AIMission"].DispenseID();
         this.playerID = playerID;
+        PlayerProperties.playersById[playerID].aIMissions.Add(aIMissionID, this);
     }
     ~AIMission()
     {
-        if (!_disposed)
-        {
-            Dispose();
-            _disposed = true;
-        }
+        if (!_disposed) Dispose();
     }
 
     /// <summary>
@@ -57,11 +54,16 @@ public abstract class AIMission : IDisposable
     {
         PlayerProperties.playersById[playerID].objectMissionAssignment[unitInfoID] = aIMissionID;
     }
+    /// <summary>
+    /// This removes the mission from all associated PlayerProperties dictionaries,
+    /// so it should be used to end missions.
+    /// </summary>
     public void Dispose()
     {
-        foreach (var pair in PlayerProperties.playersById[playerID].objectMissionAssignment)
-            if (pair.Value == aIMissionID)
-                PlayerProperties.playersById[playerID].objectMissionAssignment[pair.Key] = null;
+        foreach (var key in PlayerProperties.playersById[playerID].objectMissionAssignment.Keys)
+            if (PlayerProperties.playersById[playerID].objectMissionAssignment[key] == aIMissionID)
+                PlayerProperties.playersById[playerID].objectMissionAssignment[key] = null;
+        PlayerProperties.playersById[playerID].aIMissions.Remove(aIMissionID);
         _disposed = true;
     }
     public virtual int MakeActionRequest()

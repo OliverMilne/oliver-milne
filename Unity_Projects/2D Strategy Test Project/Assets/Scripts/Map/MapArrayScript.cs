@@ -260,14 +260,54 @@ public class MapArrayScript : MonoBehaviour
             snakingTiles.AddRange(nextTiles);
         }
     }
+    private void AssignForests(int iterations, float seedSpawnChance, float spreadChance, 
+        float additionalSpread = 0.5f)
+    {
+        List<int> potentiallyForested = new();
+
+        // randomly place some single forest tiles
+        foreach (TileArrayEntry tae in MapTileArray)
+        {
+            if (UnityEngine.Random.value < seedSpawnChance && tae.isPassable)
+            {
+                tae.hasForest = true;
+                potentiallyForested.Add(tae.taeID);
+            }
+        }
+
+        // add forest at random around those spawn points
+        for (int i = 0; i < iterations; i++) 
+        {
+            List<int> treeRing = new();
+            foreach(int taeID in potentiallyForested)
+            {
+                foreach (TileArrayEntry adj 
+                    in TileFinders.Instance.GetTileArrayEntryByID(taeID).GetAdjacentTAEs())
+                    if (!potentiallyForested.Contains(adj.taeID) && adj.isPassable)
+                        treeRing.Add(adj.taeID);
+            }
+            foreach (int taeID in treeRing)
+            {
+                if (UnityEngine.Random.value < spreadChance)
+                { 
+                    TileFinders.Instance.GetTileArrayEntryByID(taeID).hasForest = true; 
+                    potentiallyForested.Add(taeID);
+                }
+                // this should give it some sparsity
+                else if (UnityEngine.Random.value < additionalSpread)
+                    potentiallyForested.Add(taeID);
+            }
+        }
+    }
     private void AssignImpassablesRandomBlobs(int iterations, float spawnChance)
     {
         // randomly place some single impassable tiles
         foreach (TileArrayEntry tae in MapTileArray)
         {
             if (UnityEngine.Random.value < spawnChance)
-            { // at some point I'm going to have to systematise my tileset stuff so it can just take in a wodge of
-              // tile types and process them automatically
+            { 
+                // at some point I'm going to have to systematise my tileset stuff so it can just
+                // take in a wodge of tile types and process them automatically
                 MakeImpassable(tae);
                 // tae.RectifyTile();
             }
@@ -359,6 +399,7 @@ public class MapArrayScript : MonoBehaviour
         AssignTileHeights_PeakStepdownMethod();
         // place some cliffs
         AssignCliffsHeightDifferenceSnakes(0.03f, 0.9f);
+        AssignForests(4, 0.025f, 0.5f, 0.25f);
 
         foreach (TileArrayEntry tae in MapTileArray)
         {
@@ -398,13 +439,11 @@ public class MapArrayScript : MonoBehaviour
 
         Debug.Log("Creating TAEs to match saved TileDatas");
         // create TileArrayEntries to match the TileData in the save file
-        // this is where the crash is coming from!
         foreach (var entry in CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict)
         {
-            TileArrayEntry.nextTileArrayEntryID = entry.Key;
             MapTileArray[
                 entry.Value.tileActualLoc[0] - xOffset,
-                entry.Value.tileActualLoc[1] - yOffset] = new TileArrayEntry();
+                entry.Value.tileActualLoc[1] - yOffset] = new TileArrayEntry(entry.Key);
         }
 
         Debug.Log("Doing graphical stuff");
@@ -436,7 +475,6 @@ public class MapArrayScript : MonoBehaviour
     {
         tilemap.ClearAllTiles();
         // Debug.Log("Tiles cleared");
-        TileArrayEntry.nextTileArrayEntryID = 0;
         MapTileArrayDict = new Dictionary<int, TileArrayEntry>();
 
         // create an x by y tile map whose bottom left corner is at (xOffset, yOffset)

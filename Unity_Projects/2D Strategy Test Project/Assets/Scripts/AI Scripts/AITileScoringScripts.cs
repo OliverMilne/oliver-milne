@@ -18,7 +18,7 @@ public class AITileScoringScripts : MonoBehaviour
         List<TileArrayEntry> exploredTilesOverlooked
             = tilesVisibleFromTile[0].Where(
                 x => x.GetVisibilityByPlayerID(aiPlayerID) == TileVisibility.Explored).ToList();
-        return (float)newlyVisibleTiles.Count + (0.001f*exploredTilesOverlooked.Count);
+        return (float)newlyVisibleTiles.Count + (0.0001f*exploredTilesOverlooked.Count);
     }
     public static bool HasVisibleEnemyUnit(int aiPlayerID, TileArrayEntry tae)
     {

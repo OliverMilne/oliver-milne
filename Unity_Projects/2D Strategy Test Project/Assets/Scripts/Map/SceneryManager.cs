@@ -23,6 +23,7 @@ public class SceneryManager : MonoBehaviour
     public Sprite Cliff_NE;
     public Sprite Cliff_SE;
     public Sprite Cliff_E;
+    public Sprite Forest;
 
     private void Awake()
     {
@@ -49,7 +50,7 @@ public class SceneryManager : MonoBehaviour
         tae.AssignTileContents(newSceneryLocatable);
 
         SceneryInfo newSceneryInfo = newScenery.GetComponent<SceneryInfo>();
-        newSceneryInfo.sceneryType = "Cliff";
+        newSceneryInfo.sceneryType = SceneryType.Cliff;
         newSceneryInfo.sceneryDirection = dir;
     }
     public void AddCliffs(Vector3Int tileLoc, HexDir dir)
@@ -57,11 +58,31 @@ public class SceneryManager : MonoBehaviour
         TileArrayEntry tae = tileFinders.GetTileArrayEntryAtLocationQuick(tileLoc);
         AddCliffs(tae, dir);
     }
+    public void AddForest(TileArrayEntry tae)
+    {
+        GameObject newScenery =
+            Instantiate(SceneryPrefab, mapArrayScript.tilemap.CellToWorld(tae.TileLoc), Quaternion.identity);
+        SpriteRenderer spriteRenderer = newScenery.GetComponent<SpriteRenderer>();
+        spriteRenderer.sprite = Forest;
+
+        LocatableObject newSceneryLocatable = newScenery.GetComponent<LocatableObject>();
+        newSceneryLocatable.isScenery = true;
+        tae.AssignTileContents(newSceneryLocatable);
+
+        SceneryInfo newSceneryInfo = newScenery.GetComponent<SceneryInfo>();
+        newSceneryInfo.sceneryType = SceneryType.Forest;
+    }
+    public void AddForest(Vector3Int tileLoc)
+    {
+        TileArrayEntry tae = tileFinders.GetTileArrayEntryAtLocationQuick(tileLoc);
+        AddForest(tae);
+    }
     private bool IdentifyCliff(LocatableObject loco, HexDir dir)
     {
         if (!loco.isScenery) return false;
         SceneryInfo locoSceneryInfo = loco.GetComponent<SceneryInfo>();
-        if (locoSceneryInfo.sceneryType == "Cliff" && locoSceneryInfo.sceneryDirection == dir) return true;
+        if (locoSceneryInfo.sceneryType == SceneryType.Cliff && locoSceneryInfo.sceneryDirection == dir) 
+            return true;
         else return false;
     }
     public void RemoveCliffs(TileArrayEntry tae, HexDir dir)
@@ -93,16 +114,19 @@ public class SceneryManager : MonoBehaviour
         var newScenery = Instantiate(SceneryPrefab);
 
         SpriteRenderer spriteRenderer = newScenery.GetComponent<SpriteRenderer>();
-        switch (newScenery.GetComponent<SceneryInfo>().sceneryDirection)
-        {
-            case HexDir.W: spriteRenderer.sprite = Cliff_W; break;
-            case HexDir.NW: spriteRenderer.sprite = Cliff_NW; break;
-            case HexDir.SW: spriteRenderer.sprite = Cliff_SW; break;
-            case HexDir.E: spriteRenderer.sprite = Cliff_E; break;
-            case HexDir.NE: spriteRenderer.sprite = Cliff_NE; break;
-            case HexDir.SE: spriteRenderer.sprite = Cliff_SE; break;
-            default: break;
-        }
+        if (newScenery.GetComponent<SceneryInfo>().sceneryType == SceneryType.Cliff)
+            switch (newScenery.GetComponent<SceneryInfo>().sceneryDirection)
+            {
+                case HexDir.W: spriteRenderer.sprite = Cliff_W; break;
+                case HexDir.NW: spriteRenderer.sprite = Cliff_NW; break;
+                case HexDir.SW: spriteRenderer.sprite = Cliff_SW; break;
+                case HexDir.E: spriteRenderer.sprite = Cliff_E; break;
+                case HexDir.NE: spriteRenderer.sprite = Cliff_NE; break;
+                case HexDir.SE: spriteRenderer.sprite = Cliff_SE; break;
+                default: break;
+            }
+        else if (newScenery.GetComponent<SceneryInfo>().sceneryType == SceneryType.Forest)
+            spriteRenderer.sprite = Forest;
         InitialiserScript.Instance.spawnCount++;
     }
 }

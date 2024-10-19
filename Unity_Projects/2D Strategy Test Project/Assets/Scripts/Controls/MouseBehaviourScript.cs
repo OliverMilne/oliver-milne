@@ -121,8 +121,7 @@ public class MouseBehaviourScript : MonoBehaviour
                 {
                     TileArrayEntry tileAtTileLoc 
                         = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(tileLoc);
-                    if (tileAtTileLoc.GetVisibilityByPlayerID(PlayerProperties.humanPlayerID)
-                        == TileVisibility.Visible || tileAtTileLoc.forceVisible)
+                    if (tileAtTileLoc.IsTileVisibleToPlayerWithOverrides(PlayerProperties.humanPlayerID))
                     {
                         // Debug.Log("Firing SelectTileContents");
                         SelectorScript.Instance.SelectTileLocContents(tileLoc);

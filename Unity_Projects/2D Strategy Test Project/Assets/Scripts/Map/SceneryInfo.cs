@@ -5,7 +5,7 @@ using UnityEngine;
 public class SceneryInfo : MonoBehaviour
 {
     public int locatableID { get; private set; }
-    public string sceneryType
+    public SceneryType sceneryType
     {
         get => CurrentGameState.Instance.gameStateData.sceneryDataDict[locatableID].sceneryType;
         set { CurrentGameState.Instance.gameStateData.sceneryDataDict[locatableID].sceneryType = value; }
@@ -30,6 +30,6 @@ public class SceneryInfo : MonoBehaviour
 
 public class SceneryData
 {
-    public string sceneryType;
-    public HexDir sceneryDirection;
+    public SceneryType sceneryType = SceneryType.NULL;
+    public HexDir sceneryDirection = HexDir.W;
 }

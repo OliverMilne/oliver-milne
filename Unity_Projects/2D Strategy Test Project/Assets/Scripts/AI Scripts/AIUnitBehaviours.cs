@@ -69,7 +69,10 @@ public class AIUnitBehaviours : MonoBehaviour
         List<TileArrayEntry> reachableTiles =
             UnitMovement.Instance.GetLocation1TurnReachableTiles(
                 obj, objUnitInfo.moveDistance.value);
-        TileArrayEntry highestScoringTile = reachableTiles.First();
+        reachableTiles = reachableTiles.Where(x => x.taeID != obj.GetLocatableLocationTAE().taeID).ToList();
+        TileArrayEntry highestScoringTile;
+        try { highestScoringTile = reachableTiles.First(); }
+        catch { highestScoringTile = null; return obj.GetLocatableLocationTAE(); }
         float maxExplorationValue = AITileScoringScripts.ExplorationPotential(
             objUnitInfo.ownerID, highestScoringTile, 5, out bool foundUnexploredTiles);
         if (foundUnexploredTiles) nothingNewToSee = false;
@@ -95,7 +98,7 @@ public class AIUnitBehaviours : MonoBehaviour
             // see which of those does better
             highestScoringTile = reachableTiles.First();
             maxExplorationValue = AITileScoringScripts.ExplorationPotential(
-            objUnitInfo.ownerID, highestScoringTile, 5, out foundUnexploredTiles);
+                objUnitInfo.ownerID, highestScoringTile, 5, out foundUnexploredTiles);
             if (foundUnexploredTiles) nothingNewToSee = false;
             foreach (TileArrayEntry tae in reachableTiles)
             {

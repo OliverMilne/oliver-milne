@@ -8,18 +8,22 @@ public class GameStateData
 
     // Dictionaries containing game state information
     public Dictionary<string, IDDispenser> iDDispensers
-        = new Dictionary<string, IDDispenser>()
+        = new()
         {
             { "AIMission", new IDDispenser() },
-            { "LocatableObject", new IDDispenser(1) } // I forget why this starts at 1 but it's important
+            { "LocatableObject", new IDDispenser(1) }, // to avoid duplicating ID 0
+            // playerID actually initialises by dispensing, so the 1 below is just to avoid having a Player 0
+            { "PlayerProperties", new IDDispenser(1) }, 
+            { "TileArrayEntry", new IDDispenser() }
         };
-    public Dictionary<int, LocatableData> locatableDataDict = new Dictionary<int, LocatableData>();
-    public Dictionary<int, PlayerData> playerDataDict = new Dictionary<int, PlayerData>();
-    public Dictionary<int, SceneryData> sceneryDataDict = new Dictionary<int, SceneryData>();
-    public Dictionary<string, int> turnData = new Dictionary<string, int>();
-    public Dictionary<int, UnitData> unitDataDict = new Dictionary<int, UnitData>();
+    public Dictionary<int, LocatableData> locatableDataDict = new();
+    public Dictionary<string, int> miscIntsDataDict = new();
+    public Dictionary<int, PlayerData> playerDataDict = new();
+    public Dictionary<int, SceneryData> sceneryDataDict = new();
+    public Dictionary<string, int> turnData = new();
+    public Dictionary<int, UnitData> unitDataDict = new();
 
     // Misc individual pieces of game state information
-    public CameraMovementData cameraMovementData = new CameraMovementData();
-    public MapData mapData = new MapData();
+    public CameraMovementData cameraMovementData = new();
+    public MapData mapData = new();
 }

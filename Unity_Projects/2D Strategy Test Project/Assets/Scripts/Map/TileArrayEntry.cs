@@ -8,7 +8,6 @@ using System.Threading;
 public class TileArrayEntry
 {
     // id stuff
-    public static int nextTileArrayEntryID = 0;
     public int taeID { get; }
 
     // tile change tracker stuff
@@ -39,6 +38,14 @@ public class TileArrayEntry
                     adjacentTileLocsBehind[hd][2]));
             }
             return returnDir;
+        }
+    }
+    public int MoveCost
+    {
+        get
+        {
+            if (hasForest) return 2;
+            else return 1;
         }
     }
 
@@ -100,10 +107,19 @@ public class TileArrayEntry
     }
     public Dictionary<HexDir, bool> hasCliffsByDirection
     {
-        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].HasCliffsByDirection;
-        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].HasCliffsByDirection 
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasCliffsByDirection;
+        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasCliffsByDirection 
                 = value; }
     }    // this'll eventually be broadened to a dictionary of tile boundary effects
+    public bool hasForest
+    {
+        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasForest;
+        set
+        {
+            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasForest
+                = value;
+        }
+    }
     public int visibleUnitID
     {
         get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].visibleUnitID;
@@ -121,13 +137,11 @@ public class TileArrayEntry
 
     // constructors
     /// <summary>
-    /// This constructor is for creating a TileArrayEntry corresponding to an already-existing TileData,
-    /// which should specified by setting nextTileArrayEntryID to match the TileData's index.
+    /// This constructor is for creating a TileArrayEntry corresponding to an already-existing TileData.
     /// </summary>
-    public TileArrayEntry() 
+    public TileArrayEntry(int savedTaeID) 
     {
-        taeID = nextTileArrayEntryID;
-        nextTileArrayEntryID++;
+        taeID = savedTaeID;
 
         if (!CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict.ContainsKey(taeID))
             throw new System.Exception("TileData with key " + taeID + " does not exist!");
@@ -140,8 +154,7 @@ public class TileArrayEntry
     /// </summary>
     public TileArrayEntry(Vector3Int tileLocation, string basekey, bool passability = true)
     {
-        taeID = nextTileArrayEntryID;
-        nextTileArrayEntryID++;
+        taeID = CurrentGameState.Instance.gameStateData.iDDispensers["TileArrayEntry"].DispenseID();
 
         if (CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict.ContainsKey(taeID))
             throw new System.Exception("TileData with key " + taeID + " already exists!");
@@ -158,15 +171,6 @@ public class TileArrayEntry
         adjacentTileLocsBehind = new Dictionary<HexDir, int[]>();
         foreach (int playerID in PlayerProperties.playersById.Keys)
             SetVisibilityByPlayerID(playerID, TileVisibility.Hidden);
-        hasCliffsByDirection = new Dictionary<HexDir, bool>
-        {
-            { HexDir.W, false },
-            { HexDir.NW, false },
-            { HexDir.NE, false },
-            { HexDir.SE, false },
-            { HexDir.SW, false },
-            { HexDir.E, false }
-        };
 
         InitialiseAdjacentTileLocs();
     }
@@ -208,13 +212,13 @@ public class TileArrayEntry
         }
         UnitVisionScript.Instance.UpdateUnitVision();
     }
-    public List<TileArrayEntry> GetAccessibleTAEs()
+    public List<TileArrayEntry> GetAccessibleTAEs(bool canSeeNeighbours = true, bool canSeeThis = true)
     {
         List<TileArrayEntry> outputList = new List<TileArrayEntry>();
         foreach (HexDir dir in AdjacentTileLocsByDirection.Keys)
         {
             // see if there are cliffs here in that direction
-            if (hasCliffsByDirection[dir]) continue;
+            if (hasCliffsByDirection[dir] && canSeeThis) continue;
             // try and get a tile there
             try 
             {
@@ -222,7 +226,8 @@ public class TileArrayEntry
                     TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                         AdjacentTileLocsByDirection[dir]);
                 // if there's a tile there, see if it is impassable or has cliffs in this direction
-                if (neighbour.isPassable && !neighbour.hasCliffsByDirection[HexOrientation.Opposite(dir)])
+                if (!canSeeNeighbours 
+                    || (neighbour.isPassable && !neighbour.hasCliffsByDirection[HexOrientation.Opposite(dir)]))
                     outputList.Add(neighbour);
             }
             catch { }
@@ -341,6 +346,18 @@ public class TileArrayEntry
                 SceneryManager.Instance.AddCliffs(this, dir);
             }
         }
+        if (hasForest) SceneryManager.Instance.AddForest(this);
+    }
+    public bool IsTileHiddenWithOverrides(int playerID)
+    {
+        if (GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden
+            && !IsTileVisibleToPlayerWithOverrides(playerID)) return true;
+        else return false;
+    }
+    public bool IsTileVisibleToPlayerWithOverrides(int playerID)
+    {
+        return GetVisibilityByPlayerID(playerID) == TileVisibility.Visible
+            || (playerID == PlayerProperties.humanPlayerID && forceVisible);
     }
     public void RectifyScenery(bool contentsAlreadyInstantiated = true)
     {
@@ -381,7 +398,7 @@ public class TileArrayEntry
         // Debug.Log("SetTileVisibilityGraphic on tile " + taeID);
         if (forceVisible) MapArrayScript.Instance.fowTilemap.SetTile(
             TileLoc, MapArrayScript.Instance.fowVisibleTile);
-        else if (GetVisibilityByPlayerID(playerId) == TileVisibility.Visible)
+        else if (IsTileVisibleToPlayerWithOverrides(playerId))
             MapArrayScript.Instance.fowTilemap.SetTile(
                 TileLoc, MapArrayScript.Instance.fowVisibleTile);
         else if (GetVisibilityByPlayerID(playerId) == TileVisibility.Explored)
@@ -421,8 +438,7 @@ public class TileArrayEntry
             if (locatable.isUnit) 
             {
                 visibleUnitID = locatable.GetComponent<UnitInfo>().unitInfoID;
-                if (GetVisibilityByPlayerID(PlayerProperties.humanPlayerID) == TileVisibility.Visible 
-                    || forceVisible)
+                if (IsTileVisibleToPlayerWithOverrides(PlayerProperties.humanPlayerID))
                     locatable.GetComponent<UnitGraphicsController>().ShowSprite();
                 break;
             }
@@ -498,8 +514,17 @@ public class TileData
     public float terrainHeight;
     public bool isPassable;
     public int visibleUnitID = -1;
-    public Dictionary<int, TileVisibility> visibilityDict = new Dictionary<int, TileVisibility>();
+    public Dictionary<int, TileVisibility> visibilityDict = new();
     public bool forceVisible = false;
     public List<int> tileContentsIds;
-    public Dictionary<HexDir, bool> HasCliffsByDirection;
+    public Dictionary<HexDir, bool> hasCliffsByDirection = new()
+        {
+            { HexDir.W, false },
+            { HexDir.NW, false },
+            { HexDir.NE, false },
+            { HexDir.SE, false },
+            { HexDir.SW, false },
+            { HexDir.E, false }
+        };
+    public bool hasForest = false;
 }

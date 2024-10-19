@@ -9,7 +9,16 @@ public class PlayerProperties : MonoBehaviour
     /// <summary>
     /// The playerID of the human player.
     /// </summary>
-    public static int humanPlayerID;
+    public static int humanPlayerID
+    {
+        get
+        { return CurrentGameState.Instance.gameStateData.miscIntsDataDict["PlayerProperties.humanPlayerID"]; }
+        set
+        {
+            CurrentGameState.Instance.gameStateData.miscIntsDataDict["PlayerProperties.humanPlayerID"] 
+                = value;
+        }
+    }
     /// <summary>
     /// Holds PlayerProperties objects during play. Not saved.
     /// </summary>
@@ -30,7 +39,7 @@ public class PlayerProperties : MonoBehaviour
         }
     }
     /// <summary>
-    /// Don't delete things directly from here! Instead, use the method EndMission(aIMissionID).
+    /// Don't delete things directly from here! Instead, use the method AIMission.Dispose().
     /// Keys are IDs, as usual.
     /// </summary>
     public Dictionary<int,AIMission> aIMissions 
@@ -40,11 +49,6 @@ public class PlayerProperties : MonoBehaviour
         {
             CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissions = value;
         }
-    }
-    public void EndMission(int aIMissionID)
-    {
-        aIMissions[aIMissionID].Dispose();
-        aIMissions.Remove(aIMissionID);
     }
     public bool isEnvironment
     {
@@ -62,7 +66,7 @@ public class PlayerProperties : MonoBehaviour
     }
     /// <summary>
     /// Keys: locatableID; Values: aIMissionID. Auto-updates to cull dead locatableIDs;
-    /// dead aIMissionIDs should be cleaned out by the AIMission disposer.
+    /// dead aIMissionIDs are cleaned out by the AIMission disposer.
     /// </summary>
     public Dictionary<int, int?> objectMissionAssignment
     {
@@ -119,7 +123,18 @@ public class PlayerProperties : MonoBehaviour
         set { CurrentGameState.Instance.gameStateData.playerDataDict[playerID].playerName = value; }
     }
 
-    public static int nextPlayerID; // nb: starts at 1
+    private static int _nextPlayerIDBehind;
+    public static int nextPlayerID
+    {
+        get
+        {
+            int returnValue = _nextPlayerIDBehind;
+            _nextPlayerIDBehind
+                = CurrentGameState.Instance.gameStateData.iDDispensers["PlayerProperties"].DispenseID();
+            return returnValue;
+        }
+        set { _nextPlayerIDBehind = value; }
+    }
     public static List<Color> usedPlayerColors = new List<Color>();
 
     private void Awake()
@@ -137,7 +152,6 @@ public class PlayerProperties : MonoBehaviour
                 objectMissionAssignment[id] = null;
             }
         }
-        nextPlayerID++;
         usedPlayerColors.Add(playerColor);
         // Debug.Log("Generated player color for Player " + playerID + ": " + playerColor.ToString());
         playersById.Add(playerID, this);
@@ -188,7 +202,7 @@ public class PlayerProperties : MonoBehaviour
     }
     public static void ResetPlayers()
     {
-        nextPlayerID = 1;
+        nextPlayerID = CurrentGameState.Instance.gameStateData.iDDispensers["PlayerProperties"].DispenseID();
         usedPlayerColors.Clear();
         playersById = new Dictionary<int, PlayerProperties> ();
         PlayerSetupScript.Instance.WipeAllPlayers();
