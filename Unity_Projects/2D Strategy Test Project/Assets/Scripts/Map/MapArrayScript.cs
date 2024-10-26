@@ -97,7 +97,7 @@ public class MapArrayScript : MonoBehaviour
                         + TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                             tae.AdjacentTileLocsByDirection[dir]).terrainHeight)
                     {
-                        tae.hasCliffsByDirection[dir] = true;
+                        SceneryManager.Instance.AddCliffs(tae,dir);
                     }
                 }
                 catch { }
@@ -126,7 +126,7 @@ public class MapArrayScript : MonoBehaviour
                         if (tae.terrainHeight > TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                                 tae.AdjacentTileLocsByDirection[dir]).terrainHeight)
                         {
-                            tae.hasCliffsByDirection[dir] = true;
+                            SceneryManager.Instance.AddCliffs(tae, dir);
                             snakingTiles.Add(tae);
                             break;
                         }
@@ -179,7 +179,8 @@ public class MapArrayScript : MonoBehaviour
                                 tae.AdjacentTileLocsByDirection[HexOrientation.Anticlockwise1(cliffEnd)]);
                         if (adjacentTAE.isPassable)
                         {
-                            adjacentTAE.hasCliffsByDirection[HexOrientation.Clockwise1(cliffEnd)] = true;
+                            SceneryManager.Instance.AddCliffs(
+                                adjacentTAE, HexOrientation.Clockwise1(cliffEnd));
                             nextTiles.Add(adjacentTAE);
                         }
                     }
@@ -187,7 +188,7 @@ public class MapArrayScript : MonoBehaviour
                 }
                 else
                 {
-                    tae.hasCliffsByDirection[HexOrientation.Anticlockwise1(cliffEnd)] = true;
+                    SceneryManager.Instance.AddCliffs(tae, HexOrientation.Anticlockwise1(cliffEnd));
                     nextTiles.Add(tae);
                 }
             }
@@ -206,7 +207,7 @@ public class MapArrayScript : MonoBehaviour
             HexDir cliffDir = HexOrientation.RandomDir();
             if (tae.isPassable && UnityEngine.Random.value < 0.02)
             {
-                tae.hasCliffsByDirection[cliffDir] = true;
+                SceneryManager.Instance.AddCliffs(tae, cliffDir);
                 snakingTiles.Add(tae);
             }
         }
@@ -245,14 +246,14 @@ public class MapArrayScript : MonoBehaviour
                                 tae.AdjacentTileLocsByDirection[HexOrientation.Anticlockwise1(cliffEnd)]);
                         if (adjacentTAE.isPassable)
                         {
-                            adjacentTAE.hasCliffsByDirection[HexOrientation.Clockwise1(cliffEnd)] = true;
+                            SceneryManager.Instance.AddCliffs(adjacentTAE, HexOrientation.Clockwise1(cliffEnd));
                             nextTiles.Add(adjacentTAE);
                         }
                     } catch { }
                 }
                 else
                 {
-                    tae.hasCliffsByDirection[HexOrientation.Anticlockwise1(cliffEnd)] = true;
+                    SceneryManager.Instance.AddCliffs(tae, HexOrientation.Anticlockwise1(cliffEnd));
                     nextTiles.Add(tae);
                 }
             }
@@ -270,7 +271,7 @@ public class MapArrayScript : MonoBehaviour
         {
             if (UnityEngine.Random.value < seedSpawnChance && tae.isPassable)
             {
-                tae.hasForest = true;
+                SceneryManager.Instance.AddForest(tae);
                 potentiallyForested.Add(tae.taeID);
             }
         }
@@ -289,8 +290,9 @@ public class MapArrayScript : MonoBehaviour
             foreach (int taeID in treeRing)
             {
                 if (UnityEngine.Random.value < spreadChance)
-                { 
-                    TileFinders.Instance.GetTileArrayEntryByID(taeID).hasForest = true; 
+                {
+                    SceneryManager.Instance.AddForest(
+                        TileFinders.Instance.GetTileArrayEntryByID(taeID)); 
                     potentiallyForested.Add(taeID);
                 }
                 // this should give it some sparsity
@@ -404,8 +406,53 @@ public class MapArrayScript : MonoBehaviour
         foreach (TileArrayEntry tae in MapTileArray)
         {
             tae.RectifyTileGraphics();
-            tae.RectifyScenery(false);
         }
+    }
+    /// <summary>
+    /// Returns dictionary of taeIDs to assigned passable area IDs, which are generated afresh on
+    /// calling this method; the out parameter yields a dictionary of these same area IDs and their
+    /// sizes, not including the impassable area.
+    /// </summary>
+    /// <param name="areaSizes"></param>
+    /// <returns></returns>
+    public Dictionary<int,int> GetContiguousPassableAreas(out Dictionary<int,int> areaSizes)
+    {
+        Dictionary<int, int> outputDict = new();
+        Dictionary<int, bool> checkDict = new();
+        areaSizes = new();
+        foreach (int i in MapTileArrayDict.Keys) checkDict[i] = false;
+
+        IDDispenser areaIDDispenser = new();
+        foreach (int i in MapTileArrayDict.Keys)
+        {
+            if (!MapTileArrayDict[i].isPassable) 
+            { 
+                outputDict[i] = -1;
+                continue;
+            }
+            if (checkDict[i]) continue;
+
+            int areaID = areaIDDispenser.DispenseID();
+            areaSizes[areaID] = 0;
+            List<int> openTiles = new() { i };
+            while (openTiles.Count > 0) 
+            {
+                List<int> nextRound = new();
+                foreach(int j in openTiles)
+                {
+                    outputDict[j] = areaID;
+                    areaSizes[areaID]++;
+                    checkDict[j] = true;
+                    List<TileArrayEntry> openNeighbours = MapTileArrayDict[j].GetAccessibleTAEs()
+                        .Where(x => !checkDict[x.taeID]).ToList();
+                    foreach (TileArrayEntry tae in openNeighbours) 
+                        if (!nextRound.Contains(tae.taeID)) 
+                            nextRound.Add(tae.taeID);
+                }
+                openTiles = nextRound;
+            }
+        }
+        return outputDict;
     }
     public bool IsVector3IntATileLocOnTheMap(Vector3Int loc)
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 /// <summary>
@@ -15,26 +16,48 @@ public abstract class AIMission : IDisposable
 
     // Needs to be able to hold info about its mission, assign appropriate behaviours each turn,
     // and, when it's completed, let the strategic AI know and delete itself
-    /// <summary>
-    /// This produces a list on demand but anything you write to it will be lost - instead,
-    /// change the PlayerProperties' objectMissionAssignment dictionary.
-    /// </summary>
-    public List<int> AssignedUnitIDs 
+    public ReadOnlyCollection<int> AssignedUnitIDs 
     {
         get
         {
-            return PlayerProperties.playersById[playerID].objectMissionAssignment.Keys.Where(
+            return new ReadOnlyCollection<int>( 
+                PlayerProperties.playersById[playerID].objectMissionAssignment.Keys.Where(
                 x => PlayerProperties.playersById[playerID].objectMissionAssignment[x] == aIMissionID)
-                .ToList();
+                .ToList());
         }
     }
     public int playerID;
 
+    /// <summary>
+    /// This constructor is for brand new AIMissions.
+    /// It automatically adds the mission to the appropriate player dictionary.
+    /// </summary>
+    /// <param name="playerID"></param>
     public AIMission(int playerID)
     {
         aIMissionID = CurrentGameState.Instance.gameStateData.iDDispensers["AIMission"].DispenseID();
         this.playerID = playerID;
-        PlayerProperties.playersById[playerID].aIMissions.Add(aIMissionID, this);
+        if (CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissionData
+            .ContainsKey(aIMissionID)) 
+            throw new System.Exception(
+                $"A mission with ID {aIMissionID} for player {playerID} already exists!");
+        
+        CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissionData
+            .Add(aIMissionID,
+            new AIMissionData() { missionType = this.GetType(), playerID = this.playerID }); 
+        PlayerProperties.playersById[playerID].AIMissions.Add(aIMissionID, this);
+    }
+    /// <summary>
+    /// This constructor is for AIMissions which have existing AIMissionData on file.
+    /// It still adds the constructed AIMission to the appropriate dictionary.
+    /// </summary>
+    /// <param name="playerID"></param>
+    /// <param name="aIMissionID"></param>
+    public AIMission(int playerID, int aIMissionID)
+    {
+        this.playerID = playerID;
+        this.aIMissionID = aIMissionID;
+        PlayerProperties.playersById[playerID].AIMissions.Add(aIMissionID, this);
     }
     ~AIMission()
     {
@@ -63,7 +86,8 @@ public abstract class AIMission : IDisposable
         foreach (var key in PlayerProperties.playersById[playerID].objectMissionAssignment.Keys)
             if (PlayerProperties.playersById[playerID].objectMissionAssignment[key] == aIMissionID)
                 PlayerProperties.playersById[playerID].objectMissionAssignment[key] = null;
-        PlayerProperties.playersById[playerID].aIMissions.Remove(aIMissionID);
+        PlayerProperties.playersById[playerID].AIMissions.Remove(aIMissionID);
+        CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissionData.Remove(aIMissionID);
         _disposed = true;
     }
     public virtual int MakeActionRequest()
@@ -89,6 +113,8 @@ public class AIMission_SearchAndDestroy : AIMission
 {
     public AIMission_SearchAndDestroy(int playerID)
         : base(playerID) { }
+    public AIMission_SearchAndDestroy(int playerID, int aIMissionID)
+        : base(playerID, aIMissionID) { }
 
     public override int MakeActionRequest()
     {
@@ -100,8 +126,10 @@ public class AIMission_SearchAndDestroy : AIMission
     {
         // if no enemies visible, explore as a group. else, attack
         if (AIUtilities.AreEnemiesVisible(playerID))
-            AIUnitBehaviours1By1.GroupAttackNearestVisibleEnemy(AssignedUnitIDs, AssignedUnitIDs[0],playerID);
-        else AIUnitBehaviours1By1.GroupExploreUndirected(AssignedUnitIDs, AssignedUnitIDs[0], playerID); 
+            AIUnitBehaviours1By1.GroupAttackNearestVisibleEnemy(
+                AssignedUnitIDs.ToList(), AssignedUnitIDs[0],playerID);
+        else AIUnitBehaviours1By1.GroupExploreUndirected(
+            AssignedUnitIDs.ToList(), AssignedUnitIDs[0], playerID); 
     }
     public override MissionStatusReport ReportStatus()
     {

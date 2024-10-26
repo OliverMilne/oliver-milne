@@ -21,17 +21,24 @@ public class UnitVisionScript : MonoBehaviour
     {
         if (name == "ScriptBucket") instance = this;
     }
-    private List<TileArrayEntry> GetNeighboursBehind(
-        Dictionary<TileArrayEntry, int> tilesInVisionRange, TileArrayEntry tileInFront)
+    private List<int> GetNeighboursBehind(
+        Dictionary<int, int> tilesInVisionRange, int tileInFrontID)
     {
-        if (!tilesInVisionRange.ContainsKey(tileInFront)) return null;
+        if (!tilesInVisionRange.ContainsKey(tileInFrontID)) return null;
+        TileArrayEntry tileInFront = MapArrayScript.Instance.MapTileArrayDict[tileInFrontID];
         List<TileArrayEntry> overlap = tileInFront.GetAdjacentTAEs().Where(
-            x => tilesInVisionRange.ContainsKey(x)).ToList();
-        return overlap.Where(
-            x => tilesInVisionRange[x] > tilesInVisionRange[tileInFront]).ToList();
+            x => tilesInVisionRange.ContainsKey(x.taeID)).ToList();
+        List<TileArrayEntry> TAEsBehind = overlap.Where(
+            x => tilesInVisionRange[x.taeID] > tilesInVisionRange[tileInFrontID]).ToList();
+        List<int> returnIDs = new List<int>();
+        foreach(TileArrayEntry tae in TAEsBehind) returnIDs.Add(tae.taeID);
+        return returnIDs;
     }
     private List<TileArrayEntry>[] getVisibleTiles(LocatableObject locatable, int visionRange = 5)
     {
+        if (locatable.GetLocatableLocationTAE() == null)
+            throw new System.Exception(
+                $"Locatable {locatable.locatableID} GetLocatableLocationTAE() == null");
         return getVisibleTiles(locatable.GetLocatableLocationTAE(), visionRange);
     }
     private List<TileArrayEntry>[] getVisibleTiles(
@@ -56,42 +63,52 @@ public class UnitVisionScript : MonoBehaviour
         TileArrayEntry vantagePoint, int visionRange, 
         bool ignoreHiddenScenery, int playerID)
     {
-        Dictionary<TileArrayEntry, int> tilesInVisionRange = new Dictionary<TileArrayEntry, int>();
-        List<TileArrayEntry> nextTiles = new List<TileArrayEntry>();
-        tilesInVisionRange.Add(vantagePoint, 0);
+        // key is the taeID, value is the range to tile
+        Dictionary<int, int> tilesInVisionRange = new();
+        List<int> nextTiles = new();
+        tilesInVisionRange.Add(vantagePoint.taeID, 0);
 
         // Get tiles in range with distances
         for (int i = 0; i < visionRange; i++)
         {
+            // Debug.Log($"Getting tiles in vision range {i+1}");
             nextTiles.Clear();
-            foreach (TileArrayEntry tae in tilesInVisionRange.Keys) 
-                nextTiles.AddRange(
-                    tae.GetAdjacentTAEs().Where(
-                        x => !tilesInVisionRange.Keys.Contains(x) && !nextTiles.Contains(x)));
+            foreach (int taeID in tilesInVisionRange.Keys)
+            { 
+                List<TileArrayEntry> uncheckedTiles 
+                    = MapArrayScript.Instance.MapTileArrayDict[taeID].GetAdjacentTAEs().Where(
+                        x => !tilesInVisionRange.Keys.Contains(x.taeID) && !nextTiles.Contains(x.taeID)
+                        ).ToList();
+                foreach (TileArrayEntry tae in uncheckedTiles)
+                { 
+                    nextTiles.Add(tae.taeID); 
+                }
+            }
             // Debug.Log("at range i = " + i + ", nextTiles length = " + nextTiles.Count);
-            foreach (TileArrayEntry tae in nextTiles) tilesInVisionRange.Add(tae, i+1);
+            foreach (int taeID in nextTiles) 
+                tilesInVisionRange.Add(taeID, i+1);
         }
 
         Dictionary<int, bool> isObscuredDict = new Dictionary<int, bool>();
         Dictionary<int, bool> showExploredDict = new Dictionary<int, bool>();
 
-        foreach (TileArrayEntry tae in tilesInVisionRange.Keys)
+        foreach (int taeID in tilesInVisionRange.Keys)
         {
-            isObscuredDict[tae.taeID] = false;
-            showExploredDict[tae.taeID] = false;
+            isObscuredDict[taeID] = false;
+            showExploredDict[taeID] = false;
         }
         
         // Using tile utility check bools, set tiles with blockers to be invisible
-        foreach (TileArrayEntry tae 
+        foreach (int taeID 
             in tilesInVisionRange.Keys.Where(x => tilesInVisionRange[x] > 0))
         {
+            TileArrayEntry tae = MapArrayScript.Instance.MapTileArrayDict[taeID];
             // check for forests, cliffs pointing at locatable's tile
-            HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
-                vantagePoint);
-            if ((tae.hasCliffsByDirection[directionTaeToLocatable] || tae.hasForest)
+            HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae, vantagePoint);
+            if ((tae.hasCliffsByDirection[directionTaeToLocatable] || tae.HasForest)
                 && !(ignoreHiddenScenery 
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
-                isObscuredDict[tae.taeID] = true;
+                isObscuredDict[taeID] = true;
         }
 
         // Cascade invisibility to those behind them
@@ -99,40 +116,39 @@ public class UnitVisionScript : MonoBehaviour
         while (visibilityChanges) 
         {
             visibilityChanges = false;
-            List<TileArrayEntry> obscuredTiles = tilesInVisionRange.Keys.Where(
-                x => isObscuredDict[x.taeID]).ToList();
-            foreach (TileArrayEntry tae in obscuredTiles)
+            List<int> obscuredTiles = tilesInVisionRange.Keys.Where(
+                x => isObscuredDict[x]).ToList();
+            foreach (int taeID in obscuredTiles)
             {
-                List<TileArrayEntry> visibleNeighboursToObscure = GetNeighboursBehind(
-                    tilesInVisionRange, tae).Where(
-                    x => !isObscuredDict[x.taeID]).ToList();
+                TileArrayEntry tae = MapArrayScript.Instance.MapTileArrayDict[taeID];
+                List<int> visibleNeighboursToObscure = GetNeighboursBehind(
+                    tilesInVisionRange, taeID).Where(x => !isObscuredDict[x]).ToList();
                 if (visibleNeighboursToObscure.Count > 0) 
                 {
                     visibilityChanges = true;
-                    foreach (TileArrayEntry neigh in visibleNeighboursToObscure)
-                        isObscuredDict[neigh.taeID] = true;
+                    foreach (int neighID in visibleNeighboursToObscure)
+                        isObscuredDict[neighID] = true;
                 }
             }
         }
 
         // Cascade visibility once from visible tiles
-        List<TileArrayEntry> unobscuredTiles = tilesInVisionRange.Keys.Where(
-                x => !isObscuredDict[x.taeID]).ToList();
-        foreach (TileArrayEntry tae in unobscuredTiles)
+        List<int> unobscuredTiles = tilesInVisionRange.Keys.Where(
+                x => !isObscuredDict[x]).ToList();
+        foreach (int taeID in unobscuredTiles)
         {
-            List<TileArrayEntry> obscuredNeighboursToReveal = GetNeighboursBehind(
-                tilesInVisionRange, tae).Where(
-                x => isObscuredDict[x.taeID]).ToList();
+            List<int> obscuredNeighboursToReveal = GetNeighboursBehind(
+                tilesInVisionRange, taeID).Where(x => isObscuredDict[x]).ToList();
             if (obscuredNeighboursToReveal.Count > 0)
-                foreach (TileArrayEntry neigh in obscuredNeighboursToReveal)
-                    isObscuredDict[neigh.taeID] = false;
+                foreach (int neighID in obscuredNeighboursToReveal)
+                    isObscuredDict[neighID] = false;
         }
 
         // Hide visible tiles immediately behind nonadjacent cliffs down
-        foreach (TileArrayEntry tae
-            in tilesInVisionRange.Keys.Where(
-                x => tilesInVisionRange[x] > 1 && !isObscuredDict[x.taeID]))
+        foreach (int taeID
+            in tilesInVisionRange.Keys.Where(x => tilesInVisionRange[x] > 1 && !isObscuredDict[x]))
         {
+            TileArrayEntry tae = MapArrayScript.Instance.MapTileArrayDict[taeID];
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
                 vantagePoint);
@@ -142,16 +158,16 @@ public class UnitVisionScript : MonoBehaviour
                     = TileFinders.Instance.GetTileArrayEntryAtLocationQuick(
                     tae.AdjacentTileLocsByDirection[directionTaeToLocatable]);
                 if (neighbourTae.hasCliffsByDirection[HexOrientation.Opposite(directionTaeToLocatable)])
-                    isObscuredDict[tae.taeID] = true;
+                    isObscuredDict[taeID] = true;
             }
-            catch { }
+            catch { /*nothing to throw here, this is just what happens when you're on the map edge*/ }
         }
 
         // Switch adjacent tiles behind cliffs to explored instead of visible
-        foreach (TileArrayEntry tae
-            in tilesInVisionRange.Keys.Where(
-                x => tilesInVisionRange[x] == 1 && !isObscuredDict[x.taeID]))
+        foreach (int taeID
+            in tilesInVisionRange.Keys.Where(x => tilesInVisionRange[x] == 1 && !isObscuredDict[x]))
         {
+            TileArrayEntry tae = MapArrayScript.Instance.MapTileArrayDict[taeID];
             // check for cliffs pointing at locatable's tile
             HexDir directionTaeToLocatable = TileFinders.Instance.GetTileHexDirToTile(tae,
                 vantagePoint);
@@ -159,30 +175,33 @@ public class UnitVisionScript : MonoBehaviour
                 && !(ignoreHiddenScenery
                     && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
             {
-                isObscuredDict[tae.taeID] = true;
-                showExploredDict[tae.taeID] = true;
+                isObscuredDict[taeID] = true;
+                showExploredDict[taeID] = true;
             }
         }
 
         // Switch non-adjacent forests to explored instead of visible
-        foreach (TileArrayEntry tae
-            in tilesInVisionRange.Keys.Where(
-                x => tilesInVisionRange[x] > 1 && !isObscuredDict[x.taeID]))
+        foreach (int taeID
+            in tilesInVisionRange.Keys.Where(x => tilesInVisionRange[x] > 1 && !isObscuredDict[x]))
         {
-            if (tae.hasForest && 
+            TileArrayEntry tae = MapArrayScript.Instance.MapTileArrayDict[taeID];
+            if (tae.HasForest && 
                 !(ignoreHiddenScenery && tae.GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden))
             {
-                isObscuredDict[tae.taeID] = true;
-                showExploredDict[tae.taeID] = true;
+                isObscuredDict[taeID] = true;
+                showExploredDict[taeID] = true;
             }
         }
 
-        List<TileArrayEntry> visibleTiles
-            = tilesInVisionRange.Keys.Where(
-                x => !isObscuredDict[x.taeID]).ToList();
-        List<TileArrayEntry> exploredTiles
-            = tilesInVisionRange.Keys.Where(
-                x => showExploredDict[x.taeID]).ToList();
+        List<int> visibleTileIDs = tilesInVisionRange.Keys.Where( x => !isObscuredDict[x]).ToList();
+        List<TileArrayEntry> visibleTiles = new();
+        foreach (int taeID in visibleTileIDs)
+            visibleTiles.Add(MapArrayScript.Instance.MapTileArrayDict[taeID]);
+
+        List<int> exploredTileIDs = tilesInVisionRange.Keys.Where(x => showExploredDict[x]).ToList();
+        List<TileArrayEntry> exploredTiles = new();
+        foreach (int taeID in exploredTileIDs)
+            exploredTiles.Add(MapArrayScript.Instance.MapTileArrayDict[taeID]);
 
         return new List<TileArrayEntry>[] { visibleTiles, exploredTiles };
     }
@@ -203,8 +222,10 @@ public class UnitVisionScript : MonoBehaviour
             foreach (int locatableId in player.ownedObjectIds)
             {
                 LocatableObject locatable = LocatableObject.locatableObjectsById[locatableId];
+                if (locatable == null) throw new System.Exception($"No locatable with id {locatableId}");
                 // get tiles within 3
                 List<TileArrayEntry>[] visibleTiles = getVisibleTiles(locatable);
+                Debug.Log($"Unit {locatableId} can see {visibleTiles[0].Count} tiles");
                 // set them to Visible
                 foreach (TileArrayEntry tae in visibleTiles[0]) 
                     tae.SetVisibilityByPlayerID(player.playerID, TileVisibility.Visible);

@@ -7,6 +7,15 @@ using UnityEngine;
 /// </summary>
 public class HexOrientation
 {
+    public static List<HexDir> allHexDirs = new()
+    {
+        HexDir.W,
+        HexDir.SW,
+        HexDir.SE,
+        HexDir.E,
+        HexDir.NE,
+        HexDir.NW
+    };
     public static HexDir Anticlockwise1(HexDir direction) 
     {
         switch (direction)

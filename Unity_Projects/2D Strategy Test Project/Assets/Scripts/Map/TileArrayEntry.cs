@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -44,7 +45,7 @@ public class TileArrayEntry
     {
         get
         {
-            if (hasForest) return 2;
+            if (HasForest) return 2;
             else return 1;
         }
     }
@@ -105,19 +106,37 @@ public class TileArrayEntry
         get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileContentsIds;
         set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].tileContentsIds = value; }
     }
-    public Dictionary<HexDir, bool> hasCliffsByDirection
+    public ReadOnlyDictionary<HexDir, bool> hasCliffsByDirection
     {
-        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasCliffsByDirection;
-        set { CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasCliffsByDirection 
-                = value; }
-    }    // this'll eventually be broadened to a dictionary of tile boundary effects
-    public bool hasForest
-    {
-        get => CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasForest;
-        set
+        get 
         {
-            CurrentGameState.Instance.gameStateData.mapData.MapTileDataDict[taeID].hasForest
-                = value;
+            Dictionary<HexDir, bool> returnDict = new Dictionary<HexDir, bool>();
+            foreach (HexDir dir in HexOrientation.allHexDirs) returnDict.Add(dir, false);
+            foreach (int locatableID in tileContentsIds)
+            {
+                if (LocatableObject.locatableObjectsById[locatableID].isScenery)
+                    // Referring directly to the GameStateData here because this might be accessed off-thread
+                    if (CurrentGameState.Instance.gameStateData.sceneryDataDict[locatableID].sceneryType
+                        == SceneryType.Cliff)
+                        returnDict[CurrentGameState.Instance.gameStateData.sceneryDataDict[locatableID]
+                            .sceneryDirection] = true;
+            }
+            return new ReadOnlyDictionary<HexDir, bool>(returnDict);
+        }
+    }
+    public bool HasForest
+    {
+        get 
+        {
+            foreach (int locatableID in tileContentsIds)
+            {
+                if (LocatableObject.locatableObjectsById[locatableID].isScenery)
+                    // Referring directly to the GameStateData here because this might be accessed off-thread
+                    if (CurrentGameState.Instance.gameStateData.sceneryDataDict[locatableID].sceneryType 
+                        == SceneryType.Forest)
+                        return true;
+            }
+            return false;
         }
     }
     public int visibleUnitID
@@ -337,7 +356,7 @@ public class TileArrayEntry
         t.position = MapArrayScript.Instance.tilemap.CellToWorld(TileLoc);
         // Debug.Log("Moved transform " + t.ToString() + " to tile " + tileLoc);
     }
-    public void InstantiateListedScenery()
+    /*public void InstantiateListedScenery()
     {
         foreach (HexDir dir in hasCliffsByDirection.Keys)
         {
@@ -346,8 +365,8 @@ public class TileArrayEntry
                 SceneryManager.Instance.AddCliffs(this, dir);
             }
         }
-        if (hasForest) SceneryManager.Instance.AddForest(this);
-    }
+        if (HasForest) SceneryManager.Instance.AddForest(this);
+    }*/
     public bool IsTileHiddenWithOverrides(int playerID)
     {
         if (GetVisibilityByPlayerID(playerID) == TileVisibility.Hidden
@@ -359,7 +378,7 @@ public class TileArrayEntry
         return GetVisibilityByPlayerID(playerID) == TileVisibility.Visible
             || (playerID == PlayerProperties.humanPlayerID && forceVisible);
     }
-    public void RectifyScenery(bool contentsAlreadyInstantiated = true)
+    /*public void RectifyScenery(bool contentsAlreadyInstantiated = true)
     {
         if (contentsAlreadyInstantiated)
         {
@@ -374,7 +393,7 @@ public class TileArrayEntry
             }
         }
         InstantiateListedScenery();
-    }
+    }*/
     public void RectifyTileGraphics(bool contentsAlreadyInstantiated = true)
     {
         SetTileGraphicToListedType();
@@ -382,7 +401,6 @@ public class TileArrayEntry
         {
             InstantMoveContentsToTile();
         }
-        else { RectifyScenery(false); }
         SetTileVisibilityGraphic(PlayerProperties.humanPlayerID);
         // ShowVisibleUnitIfTileVisible();
     }
@@ -517,14 +535,4 @@ public class TileData
     public Dictionary<int, TileVisibility> visibilityDict = new();
     public bool forceVisible = false;
     public List<int> tileContentsIds;
-    public Dictionary<HexDir, bool> hasCliffsByDirection = new()
-        {
-            { HexDir.W, false },
-            { HexDir.NW, false },
-            { HexDir.NE, false },
-            { HexDir.SE, false },
-            { HexDir.SW, false },
-            { HexDir.E, false }
-        };
-    public bool hasForest = false;
 }

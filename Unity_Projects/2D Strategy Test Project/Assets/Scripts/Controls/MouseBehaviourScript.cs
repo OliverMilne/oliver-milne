@@ -24,7 +24,7 @@ public class MouseBehaviourScript : MonoBehaviour
     /// <summary>
     /// Should only be access from main thread.
     /// When set, this destroys every GameObject in _hoverGameObjectsBehind. Otherwise it behaves
-    /// just like a normal dictionary.
+    /// just like a normal list.
     /// </summary>
     private List<GameObject> _HoverGameObjects
     {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -38,22 +39,38 @@ public class PlayerProperties : MonoBehaviour
             UIControlScript.Instance.ShowPlayerDetails();
         }
     }
+    private Dictionary<int, AIMission> _aIMissionsBehind = new();
+    /// <summary>
+    /// This isn't saved with the gamestate - it's for telling AIMissions whether to populate
+    /// _aIMissionsBehind on get.
+    /// </summary>
+    private bool _aIMissionsBehindIsPopulated = false;
     /// <summary>
     /// Don't delete things directly from here! Instead, use the method AIMission.Dispose().
     /// Keys are IDs, as usual.
     /// </summary>
-    public Dictionary<int,AIMission> aIMissions 
-    { 
-        get => CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissions;
-        set 
+    public Dictionary<int,AIMission> AIMissions 
+    {
+        get 
         {
-            CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissions = value;
+            if (!_aIMissionsBehindIsPopulated)
+            {
+                _aIMissionsBehindIsPopulated = true; // putting this before everything else to avoid loops
+                foreach (KeyValuePair<int, AIMissionData> pair
+                    in CurrentGameState.Instance.gameStateData.playerDataDict[playerID].aIMissionData)
+                {
+                    // create AIMissions of the appropriate types to match the data here
+                    object[] args = { playerID, pair.Key };
+                    Activator.CreateInstance(pair.Value.missionType, args);
+                }
+            }
+            return _aIMissionsBehind;
         }
     }
-    public bool isEnvironment
+    public bool isWildlife
     {
-        get => CurrentGameState.Instance.gameStateData.playerDataDict[playerID].isEnvironment;
-        set { CurrentGameState.Instance.gameStateData.playerDataDict[playerID].isEnvironment = value; }
+        get => CurrentGameState.Instance.gameStateData.playerDataDict[playerID].isWildlife;
+        set { CurrentGameState.Instance.gameStateData.playerDataDict[playerID].isWildlife = value; }
     }
     public bool isHumanPlayer 
     { 
@@ -176,9 +193,9 @@ public class PlayerProperties : MonoBehaviour
         {
             loopBreaker++;
 
-            r = Random.value;
-            g = Random.value;
-            b = Random.value;
+            r = UnityEngine.Random.value;
+            g = UnityEngine.Random.value;
+            b = UnityEngine.Random.value;
 
             // see if it's in the right range
             if (r + g + b < 1 || r + g + b > 2.5) continue;

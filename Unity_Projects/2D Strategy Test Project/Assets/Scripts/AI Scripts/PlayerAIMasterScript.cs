@@ -40,7 +40,7 @@ public class PlayerAIMasterScript : MonoBehaviour
     private IEnumerator PlayerAIDoStuff(PlayerProperties playerProperties)
     {
         // reset per-turn mission data
-        foreach (var a in playerProperties.aIMissions) a.Value.movesTakenThisTurn = 0;
+        foreach (var a in playerProperties.AIMissions) a.Value.movesTakenThisTurn = 0;
 
         int loopBreaker = 0;
         while(playerProperties.actions > 0)
@@ -99,7 +99,7 @@ public class PlayerAIMasterScript : MonoBehaviour
         {
             AIMission newMission = new AIMission_SearchAndDestroy(playerProperties.playerID);
             foreach (var x in unassignedUnitIDs) 
-                playerProperties.aIMissions[newMission.aIMissionID].AssignUnit(x);
+                playerProperties.AIMissions[newMission.aIMissionID].AssignUnit(x);
         }
 
         return false;
@@ -107,13 +107,13 @@ public class PlayerAIMasterScript : MonoBehaviour
     private AIMission PickNextMissionToAct(PlayerProperties playerProperties)
     {
         Dictionary<int, int> missionActionRequests = new Dictionary<int, int>();
-        foreach (var pair in playerProperties.aIMissions)
+        foreach (var pair in playerProperties.AIMissions)
             missionActionRequests[pair.Key] = pair.Value.MakeActionRequest();
         AIMission nextMission = null;
         foreach (var missionID in missionActionRequests.Keys)
             if (missionActionRequests[missionID] > 0)
             {
-                nextMission = playerProperties.aIMissions[missionID];
+                nextMission = playerProperties.AIMissions[missionID];
                 break;
             }
         return nextMission;

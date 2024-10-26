@@ -9,9 +9,9 @@ using UnityEngine;
 public class PlayerData
 {
     public int actions = 0;
-    public Dictionary<int, AIMission> aIMissions = new();
+    public Dictionary<int, AIMissionData> aIMissionData = new();
     public bool isHumanPlayer = false;
-    public bool isEnvironment = false;
+    public bool isWildlife = false;
     public string playerName;
     public float[] playerColor = new float[4];
     public Dictionary<int, int?> objectMissionAssignment = new();

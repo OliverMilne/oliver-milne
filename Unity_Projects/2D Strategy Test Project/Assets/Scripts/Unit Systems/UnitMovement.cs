@@ -372,6 +372,11 @@ public class UnitMovement : MonoBehaviour
         TileArrayEntry start, TileArrayEntry target, int visibilityPlayerID, CancellationToken cancelToken,
         bool accountForVisibility = true, bool distanceLimited = false, int limitDistance = 30)
     {
+        if (target == null) 
+        {
+            Debug.Log("Null target passed to AStarPathCalculator");
+            return null; 
+        }
         Dictionary<int, bool> openSetDict = new Dictionary<int, bool>();
         Dictionary<int, bool> tilesToTryDict = new Dictionary<int, bool>();
         foreach (TileArrayEntry t in MapArrayScript.Instance.MapTileArray)

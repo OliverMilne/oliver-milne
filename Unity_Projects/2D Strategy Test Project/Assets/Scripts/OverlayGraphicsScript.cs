@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class OverlayGraphicsScript : MonoBehaviour
 {
@@ -68,10 +69,10 @@ public class OverlayGraphicsScript : MonoBehaviour
     public GameObject CreateTileDebugText(TileArrayEntry tae, string text)
     {
         Vector3 taePosition = tae.GetTileWorldLocation();
-        Vector3 createPosition = new Vector3(taePosition.x, taePosition.y, taePosition.z);
+        Vector3 createPosition = new Vector3(taePosition.x, taePosition.y, taePosition.z-1);
         GameObject debugTextObject =
             Instantiate(tileDebugText, createPosition, Quaternion.identity);
-        debugTextObject.GetComponent<TextMesh>().text = text;
+        debugTextObject.GetComponent<TextMeshPro>().text = text;
         return debugTextObject;
     }
 }

@@ -60,7 +60,7 @@ public class HotkeysScript : MonoBehaviour
         // spawn default unit for human player
         else if (Input.GetKeyDown(KeyCode.C))
         {
-            SpawnerScript.Instance.DefaultUnitSpawn(
+            UnitSpawnerScript.Instance.DefaultUnitSpawn(
                 TurnManagerScript.Instance.CurrentPlayer.playerID,
                 MouseBehaviourScript.Instance.GetHoveredTile());
         }
@@ -74,8 +74,7 @@ public class HotkeysScript : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.F))
         {
             TileArrayEntry tae = MouseBehaviourScript.Instance.GetHoveredTile();
-            tae.hasForest = true;
-            tae.RectifyScenery();
+            SceneryManager.Instance.AddForest(tae);
         }
         // load game
         else if (Input.GetKeyDown(KeyCode.L))
@@ -102,7 +101,7 @@ public class HotkeysScript : MonoBehaviour
                 {
                     _debugOverlays.Add(_overlayGraphicsScript.CreateTileDebugText(
                         tae,
-                        tae.hasForest.ToString()));
+                        tae.HasForest.ToString()));
                 }
             // LocatableObject.WipeAllLocatableObjectsAndReset();
             // ReportTileContentsCount();
@@ -152,21 +151,18 @@ public class HotkeysScript : MonoBehaviour
         // some debug stuff about showing unit sprites
         else if (Input.GetKeyDown(KeyCode.Y))
         {
+            Dictionary<int, int> contiguousAreaMap 
+                = MapArrayScript.Instance.GetContiguousPassableAreas(out _);
             if (_debugOverlays.Count > 0)
             {
                 foreach (GameObject overlay in _debugOverlays) GameObject.Destroy(overlay);
                 _debugOverlays.Clear();
             }
-            else foreach (var entry in CurrentGameState.Instance.gameStateData.locatableDataDict)
-                {
-                    if (entry.Value.isUnit
-                        && LocatableObject.locatableObjectsById[entry.Key]
-                        .GetComponent<UnitGraphicsController>()._isVisible)
-                        _debugOverlays.Add(_overlayGraphicsScript.CreateTileDebugText(
-                            MapArrayScript.Instance.MapTileArrayDict[
-                                LocatableObject.locatableObjectsById[entry.Key].assignedTAEID],
-                            entry.Value.unitInfoId.ToString()));
-                }
+            else foreach (TileArrayEntry tae in MapArrayScript.Instance.MapTileArray)
+            {
+                _debugOverlays.Add(_overlayGraphicsScript.CreateTileDebugText(
+                    tae, contiguousAreaMap[tae.taeID].ToString()));
+            }
         }
         // toggle FOW
         else if (Input.GetKeyDown(KeyCode.Z))

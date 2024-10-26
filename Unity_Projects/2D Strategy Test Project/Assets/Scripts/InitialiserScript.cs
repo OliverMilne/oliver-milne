@@ -35,7 +35,7 @@ public class InitialiserScript : MonoBehaviour
 
         
         // Initialise scripts from GameStateInfo
-        SpawnerScript.Instance.SpawnerScript_Initialise();
+        UnitSpawnerScript.Instance.SpawnerScript_Initialise();
         PlayerSetupScript.Instance.PlayerSetupScript_InitialiseFromGameStateInfo();
         TurnManagerScript.Instance.TurnManagerScript_InitialiseFromGameStateInfo();
         
@@ -46,7 +46,7 @@ public class InitialiserScript : MonoBehaviour
             if (CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isScenery)
                 SceneryManager.Instance.SpawnSceneryFromGameStateInfo(locatableID);
             else if (CurrentGameState.Instance.gameStateData.locatableDataDict[locatableID].isUnit)
-                SpawnerScript.Instance.SpawnUnitFromGameStateInfo(locatableID);
+                UnitSpawnerScript.Instance.SpawnUnitFromGameStateInfo(locatableID);
         }
         // Debug.Log("Spawned " + spawnCount + " LocatableObjects");
         // Debug.Log("LocatableObjectsByID count = " + LocatableObject.locatableObjectsById.Count);
@@ -72,14 +72,14 @@ public class InitialiserScript : MonoBehaviour
         CurrentGameState.Instance.NewGameStateData();
 
         // Initialise scripts in dependency-safe order
-        SpawnerScript.Instance.SpawnerScript_Initialise();
+        UnitSpawnerScript.Instance.SpawnerScript_Initialise();
         PlayerSetupScript.Instance.PlayerSetupScript_Initialise();
         TurnManagerScript.Instance.TurnManagerScript_Initialise();
         MapArrayScript.Instance.MapArrayScript_Initialise();
         MouseBehaviourScript.Instance.MouseBehaviourScript_Initialise();
         UIControlScript.Instance.UIControlScript_Initialise();
         PlayerAIMasterScript.Instance.PlayerAIMasterScript_Initialise();
-        InitialDebugScript.Instance.InitialDebugScript_Initialise();
+        StartingUnitSpawner.Instance.StartingUnitSpawner_Initialise();
         VictoryConditions.Instance.VictoryConditions_Initialise();
 
         // Once everything's set up, start the first turn

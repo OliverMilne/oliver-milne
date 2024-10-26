@@ -28,7 +28,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
         {
             CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentActions 
                 = value;
-            if (!TryGetComponent<SpawnerScript>(out SpawnerScript _)) 
+            if (!TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _)) 
                 SelectorScript.Instance.RefreshSelectionGraphics();
             OnDisplayableInfoUpdated();
         }
@@ -41,7 +41,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
             CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].currentReadiness 
                 = Mathf.Clamp(value, 0, 1);
             // make sure this is actually a unit and not the SpawnerScript!
-            if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
+            if (TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _)) return;
             GetComponent<UnitGraphicsController>().RenderUnitReadinessBar();
             OnDisplayableInfoUpdated();
         }
@@ -61,7 +61,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
             CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].hitpoints 
                 = Mathf.Clamp(value, 0, maxHP); 
             // make sure this is actually a unit and not the SpawnerScript!
-            if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
+            if (TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _)) return;
             OnDisplayableInfoUpdated();
             GetComponent<UnitGraphicsController>().RenderUnitHealthBar();
             if (CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].hitpoints <= 0)
@@ -91,7 +91,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
             {
                 hitpoints = CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID].maxHP;
             }
-            if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) return;
+            if (TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _)) return;
             GetComponent<UnitGraphicsController>().RenderUnitHealthBar();
             OnDisplayableInfoUpdated();
         }
@@ -179,14 +179,14 @@ public class UnitInfo : MonoBehaviour, IDisplayable
     {
         // subscriptions
         OnDisplayableInfoUpdated += MinimalOnDisplayableInfoUpdated;
-        if (!TryGetComponent<SpawnerScript>(out SpawnerScript _))
+        if (!TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _))
         {
             TurnManagerScript.Instance.OnStartTurn += StartOwnersTurnRegen;
             TurnManagerScript.Instance.OnStartTurn += TickDownBuffsOnOwnersTurn;
         }
 
         // set unitInfoID
-        if (TryGetComponent<SpawnerScript>(out SpawnerScript _)) unitInfoID = -1;
+        if (TryGetComponent<UnitSpawnerScript>(out UnitSpawnerScript _)) unitInfoID = -1;
         else 
         { 
             unitInfoID = GetComponent<LocatableObject>().locatableID;
@@ -196,7 +196,7 @@ public class UnitInfo : MonoBehaviour, IDisplayable
         if (!CurrentGameState.Instance.gameStateData.unitDataDict.ContainsKey(unitInfoID))
         {
             CurrentGameState.Instance.gameStateData.unitDataDict[unitInfoID] = new UnitData();
-            CopyUnitInfo(SpawnerScript.Instance.spawningUnitInfo);
+            CopyUnitInfo(UnitSpawnerScript.Instance.spawningUnitInfo);
         }
 
         // setup non-saved fields
